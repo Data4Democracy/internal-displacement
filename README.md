@@ -1,2 +1,2 @@
-# internal-displacement
-Studying news events and internal displacement.
+# Internal Displacement
+Classifying, tagging, analyzing and visualizing news events about internal displacement.
