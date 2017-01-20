@@ -1,1 +1,3 @@
 *.csv
+notebooks/tests.ipynb
+notebooks/.ipynb_checkpoints/tests-checkpoint.ipynb
