@@ -5,13 +5,13 @@ from urllib import request
 class UrlList(object):
     '''A wrapper for lists of urls in various formats.
     '''
-    def __init__(self, obj):
-        if isinstance(obj, list):
-            self.urls = pd.Series(obj)
-        if isinstance(obj, pd.Series):
-            self.urls = obj
-        if isinstance(obj, str):
-            self.urls = pd.Series(obj)
+    def __init__(self, urls):
+        if isinstance(urls, list):
+            self.urls = urls
+        if isinstance(urls, pd.Series):
+            self.urls = list(urls)
+        if isinstance(urls, str):
+            self.urls = [urls]
     
     def sample_urls(self, index=None, sample=None):
         pass
