@@ -31,3 +31,4 @@ class UrlList(object):
         soup = BeautifulSoup(html, 'html.parser')
         _extracted = [s.extract() for s in soup(['script', 'link', 'style', 'id', 'class', 'li', 'head', 'a'])]
         text = remove_newline(soup.get_text())
+        return text
