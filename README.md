@@ -1,6 +1,6 @@
 # Internal Displacement
 
-**Slack:** #internal-displacement
+**Slack:** [#refugees](https://datafordemocracy.slack.com/messages/refugees/)
 
 **Project Description:**  
 Classifying, tagging, analyzing and visualizing news events about internal displacement. Based on a [challenge from the IDMC](https://unite.un.org/ideas/content/idetect).
