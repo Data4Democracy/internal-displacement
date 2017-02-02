@@ -24,13 +24,9 @@ def textFromUrl(url):
         text = removeNewline(soup.get_text())
         print("Parsed - " + url)
         return text
-    except HTTPError as e:
+    except Exception as e:
         print("Failed - ",url,e)
         return "Nil"
-    except URLError as e:
-        print("Failed - ",url,e)
-        return "Nil"
-
 
         
 def prepareDataset(df):
@@ -46,7 +42,7 @@ def prepareDataset(df):
         texts = []
         for future in concurrent.futures.as_completed(future_to_url):
             texts.append(future.result())
-    df["Text"] = texts
+    df.loc[:,"Text"] = texts
     df = df[~df.URL.str.contains("pdf")]
     df = df[df.Text != "Nil"]
     return df
