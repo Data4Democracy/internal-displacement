@@ -2,6 +2,42 @@ from bs4 import BeautifulSoup
 import pandas as pd
 from urllib import request
 import numpy as np
+import dateutil
+import concurrent
+from concurrent import futures
+
+class Article(object):
+    '''Contains article text, date, extracted information and tag
+     Parameters
+        ----------
+        content:       the text from the article
+        date:       the date
+        title:      the title
+                    
+    '''
+    def __init__(self,content,date,title):
+        self.content = content
+        self.date = date
+        self.title = title
+
+
+    def tag(self,tag):
+        '''Use interpreter to tag article
+        '''
+        self.tag = tag
+    def add_label(self,label):
+        '''Store a label for training 
+        '''
+        self.label = label
+    def parse():
+        '''Use interpreter to parse article
+        '''
+        pass
+
+    def export():
+        '''Save article to external file
+        '''
+        pass
 
 
 class Scraper(object):
@@ -14,13 +50,24 @@ class Scraper(object):
     -------
     article: instance of Article containing body text and 
     '''
+        # Helper Functions #
+
+    def remove_newline(self,text):
+        ''' Removes new line and &nbsp characters.
+        '''
+        text = text.replace('\n', ' ')
+        text = text.replace('\xa0', ' ')
+        return text
+
+
+        #Class Functions
     def __init__(self, urls):
         if isinstance(urls, list):
             self.urls = urls
         if isinstance(urls, pd.Series):
             self.urls = list(urls)
         if isinstance(urls, str):
-            self.urls = [urls]
+            self.urls = [urls]  
 
     # Main Functions #
 
@@ -63,72 +110,110 @@ class Scraper(object):
         else:
             return self.urls[:sample_size]
 
-    def get_content():
-        '''Returns the main text body from the url
-        '''
-        pass
 
-    def get_title():
-        '''Returns the article title from the url
+    def get_soup(self,url):
         '''
-        pass
+        Retrieves the soup for the given url, ready for use in the other get_ functions
+        '''
+        try:
+            html = request.urlopen(url,timeout=15).read()
+            soup = BeautifulSoup(html, 'html.parser')
+            return soup
+        except Exception as e:
+            return None
 
-    def get_meta():
-        '''Returns date published
+    def get_content(self,soup):
+        '''Returns the main text body from the soup
         '''
-        pass
+        if soup is None:
+            return ""
+        else:
+            _extracted = [s.extract() for s in soup(['script', 'link', 'style', 'id', 'class', 'li', 'head', 'a'])]
+            text = self.remove_newline(soup.get_text())
+            return text
+
+    def get_title(self,soup):
+        '''Returns the article title from the soup
+        '''
+        try:
+            return soup.title.string
+        except:
+            return ""
+
+    def get_date(self,soup):
+        '''Returns date published - standardizes formatting with dateutil
+        ** There has to be a better way of doing this. This current method misses most date entries.
+        '''
+        if soup is None:
+            return ""
+        else:
+            html_meta = soup.find('meta', itemprop='Last-Modified', content=True)
+            if html_meta is not None:
+                return dateutil.parser.parse(html_meta['content'],ignoretz=True)
+            html_meta = soup.find('meta', itemprop='datePublished', content=True)
+            if html_meta is not None:
+                return dateutil.parser.parse(html_meta['content'],ignoretz=True)
+            html_meta = soup.find('meta', itemprop='og:updated_time', content=True)
+            if html_meta is not None:
+                return dateutil.parser.parse(html_meta['content'],ignoretz=True)
+            else:
+                return None
+                
 
     def tag_type():
         '''Returns type of content (article/video/image/pdf)
         '''
         pass
 
-    def export_article():
+    def export_article(self,url):
         '''Returns instance of article with content and all metadata
         '''
-        pass
+        soup = self.get_soup(url)
+        title = self.get_title(soup)
+        content = self.get_content(soup)
+        date = self.get_date(soup)
+        return Article(content,date,title)
 
-    # Helper Functions #
-
-    def remove_newline(text):
-        ''' Removes new line and &nbsp characters.
+    def export_all_articles(self,dataframe):
         '''
-        text = text.replace('\n', ' ')
-        text = text.replace('\xa0', ' ')
-        return text
-
-    def text_from_url(url):
-        ''' Takes a url and returns a single string of the main text on the web page.
+        Returns a list of articles created by scraping the urls contained in a dataframe. Can be used to create both unlabeled and labeled data.
+        Parameters
+            ----------
+            dataframe:  A pandas dataframe containing a column "URL". 
+                        It may optionally contain a a column "Tag", in which case the articles will be 
+                        instantiated with their true_tag fields populated.
+        Returns
+            ----------
+            articles: A list of Articles
         '''
-        html = request.urlopen(url).read()
-        soup = BeautifulSoup(html, 'html.parser')
-        _extracted = [s.extract() for s in soup(
-            ['script', 'link', 'style', 'id', 'class', 'li', 'head', 'a'])]
-        text = remove_newline(soup.get_text())
-
-class Article(object):
-    '''Contains article text, metadata, extracted information and tag
-    '''
-    def __init__(self):
-        pass
-
-    def tag():
-        '''Use interpreter to tag article
-        '''
-        pass
-
-    def parse():
-        '''Use interpreter to parse article
-        '''
-        pass
-
-    def export():
-        '''Save article to external file
-        '''
-        pass
+        URLS = dataframe.URL.values
+        with concurrent.futures.ThreadPoolExecutor(max_workers=15) as executor:
+            # Start the load operations and mark each future with its URL
+            future_to_article = {executor.submit(self.export_article, url): url for url in URLS}
+            articles = []
+            for future in concurrent.futures.as_completed(future_to_article):
+                articles.append(future.result())
+            if "Tag" in dataframe.columns:
+                tags = dataframe["Tag"].values
+                for i,a in enumerate(articles):
+                    a.add_label(tags[i])
+                return articles
+            else:
+                return articles
 
 
-class Interpreter(oject):
+
+
+
+
+
+
+
+
+
+
+
+class Interpreter(object):
     '''The interpreter can use a pre-trained model or be trained to tag 
     articles and extract useful information from them.
     '''
@@ -163,6 +248,9 @@ class Interpreter(oject):
     def parse():
         '''Parse article to extract numbers and reporting unit
         '''
+        pass
+
+    def evaluate_new_model(self,model):
         pass
 
 
