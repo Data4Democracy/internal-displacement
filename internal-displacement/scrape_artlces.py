@@ -7,13 +7,13 @@ import numpy as np
 class UrlList(object):
     '''A wrapper for lists of urls in various formats.
     '''
-    def __init__(self, obj):
-        if isinstance(obj, list):
-            self.urls = pd.Series(obj)
-        if isinstance(obj, pd.Series):
-            self.urls = obj
-        if isinstance(obj, str):
-            self.urls = pd.Series(obj)
+    def __init__(self, urls):
+        if isinstance(urls, list):
+            self.urls = urls
+        if isinstance(urls, pd.Series):
+            self.urls = list(urls)
+        if isinstance(urls, str):
+            self.urls = [urls]
 
     def sample_urls(self, size=0.25, random=True):
         '''Return a subsample of urls
@@ -50,7 +50,7 @@ class UrlList(object):
                              " Please specify True or False.")
 
         if randomize:
-            return pd.Series(np.random.choice(self.urls, sample_size))
+            return np.random.choice(self.urls, sample_size)
         else:
             return self.urls[:sample_size]
 
