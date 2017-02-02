@@ -3,22 +3,20 @@
 We already have certain datasets containing URLs.
 
 __Activities:__
-- *Do we need activities for obtaining more urls for our own dev / testing?*
+- *Do we want to obtain more urls for our own dev / testing?*
 
 ### Scraping
 To be moved to `info-sources` repo. Interested parties can contribute there.
+
+Also covers the following two points from Filtering:
+- Identify language of a document (English vs. not English)
+- Broken URLs
 
 __Activities:__
 - Maintain some sort of link to `info-sources` to understand how these tools can be used / fit into the `internal-displacement` pipeline,  
 i.e., function arguments, what they return, API type stuff.
 
 ### Filtering (Interpreter)
-
-The first two could likely be part of 'Scraping', and returned as part of meta-data:
-
-- Identify language of a document (English vs. not English)
-- Broken URLs
-
 The third filtering requirement is more specific to the `internal-displacement` domain:
 
 - Filtering out documents not reporting on human mobility (binary classification)
@@ -26,8 +24,8 @@ The third filtering requirement is more specific to the `internal-displacement` 
 __Activities:__
 - Build classifier for binary classification of documents into relevant vs. not relevant (modeling)
 
-+ *It is unclear to me if we have a training dataset for this part*
-+ *This probably also needs to be trainable in the future through some type of online learning or larger datasets.*
++ *Likely need to construct some sort of training dataset for this classifier*
++ *This probably also needs to be trainable in the future through online learning or larger datasets.*
 
 ### Tagging (Interpreter)
 
@@ -51,7 +49,7 @@ __Activities:__
 __Activities:__
 - Define the properties each Article needs to have and fill out code for instantiating new Articles (beginner friendly)
 - Define how to export / store articles (discussion):
-    + My feeling is that some sort of Database will be necessary to facilitate the online / interactive tool for modeling and analysis
+    + Likely some sort of database will be necessary to facilitate the online / interactive tool for modeling and analysis
 - Create / fill-out functions for update articles properties by calling and using return values from Scraper and Interpreter functions (beginner friendly)
 - Fill out function for saving articles along with relevant properties (beginner friendly)
 
