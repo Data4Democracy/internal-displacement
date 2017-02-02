@@ -41,7 +41,9 @@ def evaluateModel(model,articles,scoring = None ):
 
 
 
-
+'''
+The main function expects the path to a csv file with URL and Tag columns corresponding to news articles and their categories.
+'''
 
 
 if __name__ == "__main__":
@@ -49,8 +51,11 @@ if __name__ == "__main__":
         sys.exit("Usage: python classifier_trial.py <path_to_csv_file>")
     count_vect = CountVectorizer()
     tfidf_transformer = TfidfTransformer()
+
     nb_model = MultinomialNB()
+
     pipeline = make_pipeline(count_vect,tfidf_transformer,nb_model)
+
     df = pd.read_csv(sys.argv[1])
     scraper = Scraper(df.URL)
     articles = scraper.export_all_articles(df)
