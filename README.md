@@ -6,7 +6,7 @@
 Classifying, tagging, analyzing and visualizing news events about internal displacement.
 
 **Project Lead:**
-@georgerichardson
+[@grichardson](https://datafordemocracy.slack.com/messages/@grichardson/)
 
 ### Getting started:
 * We welcome contributions from first timers
