@@ -42,7 +42,7 @@ def evaluateModel(model,articles,scoring = None ):
 
 
 '''
-The main function expects the path to a csv file with URL and Tag columns corresponding to news articles and their categories.
+The main function expects an argument containing the path to a csv file with URL and Tag columns corresponding to news articles and their categories.
 '''
 
 
