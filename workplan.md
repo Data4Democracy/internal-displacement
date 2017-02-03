@@ -22,10 +22,10 @@ The third filtering requirement is more specific to the `internal-displacement` 
 - Filtering out documents not reporting on human mobility (binary classification)
 
 __Activities:__
-- Build classifier for binary classification of documents into relevant vs. not relevant (modeling)
+- Implement filtering out of documents not reporting on human mobility (modeling)
+>@milanoleonardo: *'this can be done by looking at the dependency trees of the sentences in the text to make sure there is a link between a “reporting term” and a “reporting unit” (see challenge for details). This would definitely remove all documents reporting on “hip displacement” or sentences like “displaced the body of people” etc.'*
 
-+ *Likely need to construct some sort of training dataset for this classifier*
-+ *This probably also needs to be trainable in the future through online learning or larger datasets.*
+*How to test this functionality? Build some hand-crafted examples of things that shouldn't be included?*
 
 ### Tagging (Interpreter)
 
@@ -34,6 +34,7 @@ __Activities:__
 __Activities:__
 - Select approach / model that will allow for online learning or re-training in the future with new datasets. (discussion)
 - Build and train classifier for classifiying into the 3 required classes. (modeling)
+>@milanoleonardo: *'the best would be to set a fixed threshold on the probability distribution and assign a tag based on the content of the document.'*
 
 ### NLP
 
@@ -81,5 +82,17 @@ __Activities:__
 __Activities:__
 - Create, maintain and update user guide (documentation)
 - Create, maintain and update admin guide (documentation)
+
+
+### Possible Libraries
+
+___NLP:___
+- nltk
+- Tensor Flow
+- Spacy
+
+___Text parsing and fact extraction:___
+- mordecai - Geoparsing (extracting relevant country)
+- goose-extractor - Text + meta-data extraction
 
 
