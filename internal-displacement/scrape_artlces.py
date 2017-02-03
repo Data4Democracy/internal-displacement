@@ -114,26 +114,53 @@ class Scraper(object):
     def get_soup(self,url):
         '''
         Retrieves the soup for the given url, ready for use in the other get_ functions
+        Parameters
+        ----------
+        url: the url from which to scrape content
+
+        Returns
+        -------
+        soup: BeautifulSoup object containing content scraped from page
         '''
+        # attempt to request page from url and return BeaufitulfSoup object
         try:
             html = request.urlopen(url,timeout=15).read()
             soup = BeautifulSoup(html, 'html.parser')
             return soup
+        # if link is broken or timesout return empty variable
         except Exception as e:
             return None
 
     def get_content(self,soup):
         '''Returns the main text body from the soup
+        Parameters
+        ----------
+        soup: BeautifulSoup object containing contents of web page
+
+        Returns
+        -------
+        text: string of text from webpage with script, styling, links and more removed
         '''
+        # if soup contained no information return empty string
         if soup is None:
             return ""
         else:
+            # extract all components of soup matching the following tags
+            ## is there an alternative to having this hard coded?
             _extracted = [s.extract() for s in soup(['script', 'link', 'style', 'id', 'class', 'li', 'head', 'a'])]
+            # remove newline and &nbsp characters
             text = self.remove_newline(soup.get_text())
             return text
 
     def get_title(self,soup):
         '''Returns the article title from the soup
+        Parameters
+        ----------
+        soup: BeautifulSoup object containing contents of web page
+
+        Returns
+        -------
+        title: string with title of web page
         '''
         try:
             return soup.title.string
@@ -142,10 +169,20 @@ class Scraper(object):
 
     def get_date(self,soup):
         '''Returns date published - standardizes formatting with dateutil
-        ** There has to be a better way of doing this. This current method misses most date entries.
+        ## There has to be a better way of doing this. This current method misses most date entries.
+        Parameters
+        ----------
+        soup: BeautifulSoup object containing contents of web page
+
+        Returns
+        -------
+        title: string with title of web page
         '''
+        # if soup contained no information return empty string
         if soup is None:
             return ""
+        # try some searches for data type elements in the meta tag
+        # dateutil parser returns a datetime object for most inputs
         else:
             html_meta = soup.find('meta', itemprop='Last-Modified', content=True)
             if html_meta is not None:
@@ -178,13 +215,13 @@ class Scraper(object):
         '''
         Returns a list of articles created by scraping the urls contained in a dataframe. Can be used to create both unlabeled and labeled data.
         Parameters
-            ----------
-            dataframe:  A pandas dataframe containing a column "URL". 
-                        It may optionally contain a a column "Tag", in which case the articles will be 
-                        instantiated with their true_tag fields populated.
+        ----------
+        dataframe:  A pandas dataframe containing a column "URL". 
+                    It may optionally contain a a column "Tag", in which case the articles will be 
+                    instantiated with their true_tag fields populated.
         Returns
-            ----------
-            articles: A list of Articles
+        ----------
+        articles: A list of Articles
         '''
         URLS = dataframe.URL.values
         with concurrent.futures.ThreadPoolExecutor(max_workers=15) as executor:
