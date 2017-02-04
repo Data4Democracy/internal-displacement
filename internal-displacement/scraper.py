@@ -71,7 +71,7 @@ class Scraper(object):
             return self.urls[:sample_size]
 
 
-    def html_report(self, url):
+    def html_article(self, url):
         '''Downloads and extracts content plus metadata for html page
         Parameters
         ----------
@@ -111,7 +111,7 @@ class Scraper(object):
             if url[-3:] == 'pdf':
                 continue
             else:
-                article = html_report(url)
+                article = html_article(url)
                 articles.append(article)
                 
         return articles
