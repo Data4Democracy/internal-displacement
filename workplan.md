@@ -80,6 +80,19 @@ __Activities:__
 - Design / build front-end page(s) for analysts
 - Create back-end functionality for connecting to database and returning necessary data, facts etc.
 
+
+### Data Engineering
+
+We will need to construct a data pipeline / workflow to manage the end-to-end process, both for batch processing of files as well as (potentially) real-time processing of individual urls:
+
++ Data collection from various sources, i.e. existing csv files, new file provided by analysts etc.
++ Data pre-processing - applying the filtering tools created to exclude broken, irrelevant and non-English articles
++ Article classification - applying the pre-trained classifier, or training a new classifier
++ Fact Extraction - using NLP tools for extracting the key facts from the articles
++ Data storage - saving the article along with relevenat tags and extracted facts
++ API for enabling data analysts to interact with the data
+
+
 ### All Deliverables:
 
 - URL to working version of the tool
@@ -102,6 +115,7 @@ ___NLP:___
 
 ___Text parsing and fact extraction:___
 - mordecai - Geoparsing (extracting relevant country)
-- goose-extractor - Text + meta-data extraction
+- Newspaper module (python 3)
+- goose-extractor - Text + meta-data extraction (only python 2)
 
 
