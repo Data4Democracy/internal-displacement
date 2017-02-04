@@ -239,17 +239,6 @@ class Scraper(object):
                 return articles
 
 
-
-
-
-
-
-
-
-
-
-
-
 class Interpreter(object):
     '''The interpreter can use a pre-trained model or be trained to tag 
     articles and extract useful information from them.
