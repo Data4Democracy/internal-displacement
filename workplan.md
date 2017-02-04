@@ -16,6 +16,17 @@ __Activities:__
 - Maintain some sort of link to `info-sources` to understand how these tools can be used / fit into the `internal-displacement` pipeline,  
 i.e., function arguments, what they return, API type stuff.
 
+### Pipeline
+Controls the input and output of data with respect to scraping and interpreting articles.
+
+__Activities__
+- Define how to export / store articles (discussion):
+    + CSVs for now, but likely some sort of database will be necessary to facilitate the online / interactive tool for modeling and analysis
+- Take new data and extract only URLs, converting them into list
+- Checks and keeps a log of all previously scraped URLs
+- Checks whether a URL is from a domain on an RSS whitelist (future)
+- Manages output from scraper and either appends to original database or creates new database
+
 ### Filtering (Interpreter)
 The third filtering requirement is more specific to the `internal-displacement` domain:
 
@@ -49,8 +60,6 @@ __Activities:__
 
 __Activities:__
 - Define the properties each Article needs to have and fill out code for instantiating new Articles (beginner friendly)
-- Define how to export / store articles (discussion):
-    + Likely some sort of database will be necessary to facilitate the online / interactive tool for modeling and analysis
 - Create / fill-out functions for update articles properties by calling and using return values from Scraper and Interpreter functions (beginner friendly)
 - Fill out function for saving articles along with relevant properties (beginner friendly)
 
