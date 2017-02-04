@@ -1,0 +1,17 @@
+awscli==1.11.34
+botocore==1.4.91
+colorama==0.3.7
+conda==4.1.11
+conda-env==2.5.0a0
+docutils==0.13.1
+jmespath==0.9.0
+pyasn1==0.1.9
+pycosat==0.6.1
+pycrypto==2.6.1
+python-dateutil==2.6.0
+PyYAML==3.11
+requests==2.10.0
+rsa==3.4.2
+ruamel-yaml===-VERSION
+s3transfer==0.1.10
+six==1.10.0
