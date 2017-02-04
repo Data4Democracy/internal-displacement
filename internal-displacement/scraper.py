@@ -81,19 +81,19 @@ class Scraper(object):
         -------
         report: dictionary containing page content and metadata
         '''
-        report = {}
+        article = {}
         a = newspaper.Article(url)
         a.download()
         a.parse()
-        report['domain'] = a.source_url
-        report['title'] = a.title
-        report['authors'] = a.authors
-        report['date_pub'] = a.publish_date
-        report['text'] = remove_newline(a.text)
+        article['domain'] = a.source_url
+        article['title'] = a.title
+        article['authors'] = a.authors
+        article['date_pub'] = a.publish_date
+        article['text'] = remove_newline(a.text)
         # tag the type of article
         ## currently default to text but should be able to determine img/video etc
-        report['type'] = 'text'
-        return report
+        article['type'] = 'text'
+        return article
 
     def scrape(self, urls):
         '''Scrapes content and metadata from all pages in a list
@@ -106,12 +106,12 @@ class Scraper(object):
         -------
         reports: list of dictionaries containing all reports
         '''
-        reports = []
+        articles = []
         for url in urls:
             if url[-3:] == 'pdf':
                 continue
             else:
-                report = html_report(url)
-                reports.append(report)
+                article = html_report(url)
+                articles.append(article)
                 
-        return reports
+        return articles
