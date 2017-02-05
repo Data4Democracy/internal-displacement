@@ -11,37 +11,15 @@ import concurrent
 from concurrent import futures
 import itertools
 
-"""
-A pipeline to facilitate the extraction and storage of data from URLS in an SQL database.
-    - Facilitates ingestion of articles (which may or may not be labeled with a category)
-    - Allow storage of features (ie text) extracted from articles
-    - Allow storage of labels for training cases
-    - Allow retrieval of labeled features for training.
-    - Data is persisted to disk via SQL
-    - Data can be retrieved from disk by initializing an URLArticlePipelineSQl object with the database file.
-    - Uses two SQL tables
-        - table 'Articles' containing information common to all articles (ie all features except labels)
-        - table 'Labels'containing the labels for training cases
-    - Both tables use URL as the primary key
-        - ensures each url is unique in the database and is only scraped once.
-        - training data can be retrieved by doing an inner join.
-    -For now, SQLite3 is used. If we need to scale up we could swap this for psycopg2 and AWS etc.
-"""
 
 
-class URLArticlePipelineSQL(object):
-    """
-    Usage:
-        Initialize an instance of URLArticlePipelineSQL with a filepath to the SQL database file.
-            - If the file does not exist it will be created.
-        Populate the SQL article database with scraped features using process_urls
-        Populate the SQL label database with process_labeled_data.
-
-        Retrieve numpy arrays of features and labels using get_training_data.
-    """
+class SQLArticleInterface(object):
 
     def __init__(self, sql_database_file):
         """
+      Initialize an instance of URLArticlePipelineSQL with the path to a SQL database file.
+            - If the file does not exist it will be created.
+            - If the file does exist, all previously stored data will be accessible through the object methods
         :param sql_database_file:   The path to the sql database file
         """
         self.sql_connection = sqlite3.connect(sql_database_file, isolation_level=None)
@@ -52,10 +30,8 @@ class URLArticlePipelineSQL(object):
 
     def insert_article(self, article):
         """
-        Inserts articles into the database.
-        :param article:     An article object
-
-
+        Inserts an article into the database.
+        :param article:     An Article object
         """
         url = article.url
         authors = ",".join(article.authors)
@@ -75,12 +51,12 @@ class URLArticlePipelineSQL(object):
 
     def process_urls(self, url_csv, url_column="URL"):
         """
-        Given a csv file containing article urls ,
-        populate the SQL table with the article data.
+        Populate the Articles SQL table with the data scraped from urls in a csv file. URLS that are already in the
+        table will not be added again.
+        Relies on scraper.scrape to handle extraction of data from an URL.
 
-
-        :param url_csv:         The csv file containing the URLs (and maybe the labels)
-        :param url_column:      The column containing the URLs
+        :param url_csv:         Path to a csv file containing the URLs
+        :param url_column:      The column of the csv file containing the URLs
         """
         dataset = csv_read(url_csv)
         urls = urls_from_csv(dataset, url_column)
