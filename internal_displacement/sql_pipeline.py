@@ -1,4 +1,4 @@
-from internal_displacement.scraper import Scraper
+from internal_displacement.scraper import scrape
 from internal_displacement.article import Article
 from internal_displacement.csv_tools import urls_from_csv,csv_read
 import os
@@ -6,7 +6,10 @@ import json
 import pandas as pd
 import dateutil
 import sqlite3
-
+import numpy as np
+import concurrent
+from concurrent import futures
+import itertools
 """
 A pipeline to facilitate the extraction and storage of data from URLS in an SQL database.
 Purpose:
@@ -15,17 +18,26 @@ Purpose:
     - Allow storage of features (ie text) extracted from articles
     - Allow storage of labels for training cases
     - Allow retrieval of labeled features for training.
+    - Data is persisted to disk via SQL
+    - Data can be retrieved from disk by initializing an URLArticlePipelineSQl object with the database file.
     - Uses two SQL tables
         - one containing information common to all articles (ie all features except labels)
         - one containing the labels for training cases
     - Tables use URL as the primary key - ensures each url is unique in the database.
     - Training data can be retrieved by doing an inner join.
 
-    -For now, SQLite3 is used. If we need to scale up we can swap this for psycopg2 and AWS etc.
+    -For now, SQLite3 is used. If we need to scale up we could swap this for psycopg2 and AWS etc.
 """
 
+def grouper(n, iterable):
+    it = iter(iterable)
+    while True:
+       chunk = tuple(itertools.islice(it, n))
+       if not chunk:
+           return
+       yield chunk
 
-class URLArticlePipeline(object):
+class URLArticlePipelineSQL(object):
 
     #Class Functions#
 
@@ -39,47 +51,86 @@ class URLArticlePipeline(object):
         self.sql_cursor.execute("CREATE TABLE IF NOT EXISTS Labels (url TEXT,category TEXT)")
 
 
+
+    def insert_article(self,article):
+        """
+        Inserts articles into the database.
+        :param article:     An article object
+
+
+        """
+        url = article.url
+        authors = ",".join(article.authors)
+        pub_date = article.get_pub_date_string()
+        domain = article.domain
+        content = article.content
+        content_type = article.content_type
+        try:
+            self.sql_cursor.execute("INSERT INTO Articles VALUES (?,?,?,?,?,?)",
+                               (url, authors, pub_date, domain, content, content_type))
+            self.sql_connection.commit()
+            print("Inserted: {}".format(url))
+        except sqlite3.IntegrityError:
+            print("URL{url} already exists in article table. Skipping.".format(self.url))
+        except Exception as e:
+            print("Exception: {}".format(e))
+
+
+    def insert_labels(self,labels):
+        pass
+
+    def concurrent_batch_process_urls(self,urls):
+        article_futures = []
+        with concurrent.futures.ThreadPoolExecutor(max_workers=15) as executor:
+            for url in urls:
+                article_futures.append(executor.submit(scrape, url))
+        for f in concurrent.futures.as_completed(article_futures):
+            try:
+                article = f.result()
+                if article:
+                    self.insert_article(article)
+            except Exception as e:
+                print("Exception: {}".format(e))
+
+
     def process_urls(self,url_csv,url_column = "URL",label_column=None):
         """
         Given a csv file containing article urls (and optionally also containing the classification labels), populate the SQL table with
         the article data. If labels are present, populate the label table with the labels.
 
-        Could implement multi-threading here - collect the sql insertion strings in parallel then execute them all together.
 
         :param url_csv:         The csv file containing the URLs (and maybe the labels)
         :param url_column:      The column containing the URLs
-        :param label_column:    Optional - the column containing the labels.
         :return:
         """
         dataset = csv_read(url_csv)
-        urls = urls_from_csv(dataset,url_column,label_column)
+        urls = urls_from_csv(dataset,url_column)
         existing_urls = [r[0] for r in self.sql_cursor.execute("SELECT url FROM Articles")]
         urls = [u for u in urls if u not in existing_urls]
-        if label_column:
-            for url,label in urls:
-                print(url)
-                article = Scraper.html_report(self,url)     #Once we can scrape pdfs, html_report can be swapped for
-                                                            # a generic function that determines content_type and returns an article
-                article.insert_into_sql_table(self.sql_cursor)
-                self.sql_connection.commit()
-                try:
-                    self.sql_cursor.execute("INSERT INTO Labels VALUES(?,?)",(url,label))
-                    self.sql_connection.commit()
-                except sqlite3.IntegrityError:
-                    print("URL{url} already exists in labels table. Skipping.".format(self.url))
-                except Exception as e:
-                    print("Exception: {}".format(e))
-        else:
-            for url in urls:
-                article = Scraper.html_report(self, url)
-                article.insert_into_sql_table(self.sql_cursor)
+        url_groups = grouper(50,urls)
+        for ug in url_groups:
+            self.concurrent_batch_process_urls(ug)
+
+
+
+
+
+
+
 
 
     def get_training_data(self):
         """
         Retrieves the labels and features for use in a classification task
+        Returns:
+            Two numpy arrays; one containing texts and one containing labels.
         """
-        pass
+
+        training_cases = self.sql_cursor.execute("SELECT content,category FROM Articles INNER JOIN Labels ON Articles.url = Labels.url")
+        labels = np.array([r[1] for r in training_cases])
+        features = np.array(r[0] for r in training_cases)
+        return labels,features
+
 
 
 
@@ -107,8 +158,11 @@ class URLArticlePipeline(object):
 
 d = "/home/james/Documents/DataForDemocracy/internal-displacement/internal-displacement/datasets/IDMC Unite Ideas - Training dataset - TrainingDataset.csv"
 
-url_pipe = URLArticlePipeline("sql_db.sqlite")
+url_pipe = URLArticlePipelineSQL("sql_db.sqlite")
 url_pipe.process_urls(d,label_column="Tag")
+
+# features,labels = url_pipe.get_training_data()
+# print(features)
 # urls = [d.URL.values[1]]
 # print(urls)
 # up = URLArticlePipeline(urls)

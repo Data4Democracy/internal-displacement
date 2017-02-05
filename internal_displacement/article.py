@@ -37,11 +37,6 @@ class Article(object):
         """
         self.tag = tag
 
-    def add_label(self, label):
-        """Store a label for training cases
-        """
-        self.label = label
-
     def parse(self):
         """Use interpreter to parse article
         """
@@ -74,5 +69,6 @@ class Article(object):
         except Exception as e:
             print("Exception: {}".format(e))
 
-
+    def get_pub_date_string(self):
+        return date_time_converter(self.publication_date)
 
