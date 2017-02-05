@@ -1,6 +1,6 @@
 import newspaper
 import csv
-
+from internal-displacement import Article
 class Scraper(object):
     '''Scraper that accepts a url (or urls) and returns an instance of Article
     Parameters
@@ -22,14 +22,7 @@ class Scraper(object):
         return text
 
 
-        # Class Functions #
-    def __init__(self, urls):
-        if isinstance(urls, list):
-            self.urls = urls
-        if isinstance(urls, pd.Series):
-            self.urls = list(urls)
-        if isinstance(urls, str):
-            self.urls = [urls]
+    # Class Functions #
 
     def sample_urls(self, size=0.25, random=True):
         '''Return a subsample of urls
@@ -81,18 +74,19 @@ class Scraper(object):
         -------
         report: dictionary containing page content and metadata
         '''
-        article = {}
+
         a = newspaper.Article(url)
         a.download()
         a.parse()
-        article['domain'] = a.source_url
-        article['title'] = a.title
-        article['authors'] = a.authors
-        article['date_pub'] = a.publish_date
-        article['text'] = remove_newline(a.text)
+        article_domain = a.source_url
+        article_title = a.title
+        article_authors = a.authors
+        article_pub_date = a.publish_date
+        article_text = self.remove_newlines(a.text)
         # tag the type of article
         ## currently default to text but should be able to determine img/video etc
-        article['type'] = 'text'
+        article_type = 'text'
+        article = Article
         return article
 
     def scrape(self, urls):
@@ -115,3 +109,14 @@ class Scraper(object):
                 articles.append(article)
                 
         return articles
+
+
+
+    def __init__(self, urls):
+        if isinstance(urls, list):
+            self.urls = urls
+        if isinstance(urls, pd.Series):
+            self.urls = list(urls)
+        if isinstance(urls, str):
+            self.urls = [urls]
+
