@@ -1,6 +1,5 @@
 import newspaper
 import csv
-from collections import OrderedDict
 import urllib
 from urllib import request
 import textract
@@ -34,17 +33,16 @@ class Scraper(object):
         if isinstance(urls, str):
             self.urls = [urls]
 
-    def html_report(self, url):
+    def html_article(self, url):
         '''Downloads and extracts content plus metadata for html page
         Parameters
         ----------
         url: url of page to be scraped
-
         Returns
         -------
         report: dictionary containing page content and metadata
         '''
-        article = OrderedDict()
+        article = {}
         a = newspaper.Article(url)
         a.download()
         a.parse()
@@ -75,8 +73,8 @@ class Scraper(object):
         ''' This function will extract all text from the url passed in
         '''
         text = str(textract.process(get_pdf(url), method='pdfminer'), 'utf-8')
-        text = text.replace('\n', ' ')
-        text = text.replace('\xa0', ' ')
+        text = text.replace('\n', ' ')   #can replace with a call to
+        text = text.replace('\xa0', ' ') # the helper function. 
         return text
     def scrape(self, urls):
         '''Scrapes content and metadata from all pages in a list
@@ -92,12 +90,14 @@ class Scraper(object):
         reports: list of dictionaries containing all reports
         '''
         articles = []
+        pdf_articles = []
         for url in urls:
             if url[-3:] == '.  ':       # Found this anomaly in some urls
                 url = url.rstrip('.  ')
             if url[-3:] == 'pdf':
-                pdf_texts = [get_body_text(url) for url in urls]
+                pdf_text = get_body_text(url)
+                pdf_articles.append(pdf_text)
             else:
-                articles = [html_report(url) for url in urls]
-
+                article = html_article(url)
+                articles.append(article)
         return articles
