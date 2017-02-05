@@ -16,6 +16,17 @@ __Activities:__
 - Maintain some sort of link to `info-sources` to understand how these tools can be used / fit into the `internal-displacement` pipeline,  
 i.e., function arguments, what they return, API type stuff.
 
+### Pipeline
+Controls the input and output of data with respect to scraping and interpreting articles.
+
+__Activities__
+- Define how to export / store articles (discussion):
+    + CSVs for now, but likely some sort of database will be necessary to facilitate the online / interactive tool for modeling and analysis
+- Take new data and extract only URLs, converting them into list
+- Checks and keeps a log of all previously scraped URLs
+- Checks whether a URL is from a domain on an RSS whitelist (future)
+- Manages output from scraper and either appends to original database or creates new database
+
 ### Filtering (Interpreter)
 The third filtering requirement is more specific to the `internal-displacement` domain:
 
@@ -49,8 +60,6 @@ __Activities:__
 
 __Activities:__
 - Define the properties each Article needs to have and fill out code for instantiating new Articles (beginner friendly)
-- Define how to export / store articles (discussion):
-    + Likely some sort of database will be necessary to facilitate the online / interactive tool for modeling and analysis
 - Create / fill-out functions for update articles properties by calling and using return values from Scraper and Interpreter functions (beginner friendly)
 - Fill out function for saving articles along with relevant properties (beginner friendly)
 
@@ -70,6 +79,19 @@ Online tool that allows analysts to interact directly with data, choose what the
 __Activities:__
 - Design / build front-end page(s) for analysts
 - Create back-end functionality for connecting to database and returning necessary data, facts etc.
+
+
+### Data Engineering
+
+We will need to construct a data pipeline / workflow to manage the end-to-end process, both for batch processing of files as well as (potentially) real-time processing of individual urls:
+
++ Data collection from various sources, i.e. existing csv files, new file provided by analysts etc.
++ Data pre-processing - applying the filtering tools created to exclude broken, irrelevant and non-English articles
++ Article classification - applying the pre-trained classifier, or training a new classifier
++ Fact Extraction - using NLP tools for extracting the key facts from the articles
++ Data storage - saving the article along with relevenat tags and extracted facts
++ API for enabling data analysts to interact with the data
+
 
 ### All Deliverables:
 
@@ -93,6 +115,7 @@ ___NLP:___
 
 ___Text parsing and fact extraction:___
 - mordecai - Geoparsing (extracting relevant country)
-- goose-extractor - Text + meta-data extraction
+- Newspaper module (python 3)
+- goose-extractor - Text + meta-data extraction (only python 2)
 
 

@@ -15,7 +15,7 @@
 ## Getting started:
 
 1. Join the [Slack channel]((https://datafordemocracy.slack.com/messages/refugees/))
-2. Read the pinned posts to get a full idea of the project.
+2. Read the pinned posts in Slack to get a full idea of the project or and feel free to ask questions.
 * Browse our [issues](https://github.com/Data4Democracy/internal-displacement/issues) for `help-wanted`, `beginner-friendly`, and `discussion` tags (full issue label guide [here](https://github.com/Data4Democracy/assemble/blob/master/issue-labels-explained.md))
 * See something you want to work on? Make a comment on the issue or ping us on Slack so we can assign you the task or discuss it. 
 * Write the code and submit a pull request to add it to the project. Reach out for help any time!
@@ -24,6 +24,7 @@
 
 - Try to keep each contribution and pull request focussed mostly on solving the issue at hand. If you see more things that are needed, feel free to let us know and/or make another issue.
 - Datasets can be accessed from [Dropbox](https://www.dropbox.com/sh/59lyts9d4ar1jcc/AADMyxDSQC_NGbpaPiuDGJ2ha?dl=0)
+- We have a [working plan](workplan.md) for the project.
 - Not ready to submit code to the main project? Feel free to play around with notebooks and submit them to the repository.
 
 ### Things you should know

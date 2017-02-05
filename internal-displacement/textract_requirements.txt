@@ -1,0 +1,23 @@
+This file contains a list of packages required to get textract to run.
+Documentation:
+https://textract.readthedocs.io/en/stable/
+https://github.com/deanmalmgren/textract
+Requirements (from github page):
+# This file contains all python dependencies that are required by the
+# textract package in order for it to properly work
+argcomplete
+chardet
+python-pptx>=0.5.1
+#pdfminer.six <-- go back to this after the shebang fix is released (see https://github.com/goulu/pdfminer/issues/27)
+https://github.com/goulu/pdfminer/zipball/e6ad15af79a26c31f4e384d8427b375c93b03533#egg=pdfminer.six
+docx2txt
+beautifulsoup4
+xlrd
+EbookLib
+SpeechRecognition>=3.1.0
+https://github.com/mattgwwalker/msg-extractor/zipball/master
+six
+
+For what it's worth, following the recommended installation procedure should be
+all you need to do. I found that I had to install pdfminer.six separately, and
+that did the trick. 
