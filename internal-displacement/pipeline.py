@@ -80,14 +80,8 @@ def urls_from_csv(dataset, column=None, header=1):
 
     return urls
 
-def export_articles(articles, format='csv', append=True):
-
-
-
 def sample_urls(urls, size=0.25, random=True):
-        '''
-        Return a subsample of URLs. Helpful function if you don't want to 
-        scrape a large number of URLs from a dataset.
+        '''Return a subsample of urls
         Parameters
         ----------
         size: float or int, default 0.25.
