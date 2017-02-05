@@ -17,6 +17,23 @@ def csv_read(csvfile):
         dataset = list(reader)
     return dataset
 
+def csv2dict(csvfile):
+    '''
+    Takes csv in the form of the training dataset and returns as list of
+    ordered dictionaries each representing a row.
+    Parameters
+    ----------
+    csvfile: directory of csv file
+
+    Returns
+    -------
+    dataset: dataset including header as list of ordered dictionaries
+    '''
+    with open(csvfile, 'r') as f:
+        reader = csv.DictReader(f)
+        dataset = [line for line in reader]
+    return dataset
+
 def urls_from_csv(dataset, column=None, header=1):
     '''
     Takes csv in the form of the training dataset and returns list of URLs
@@ -64,7 +81,7 @@ def urls_from_csv(dataset, column=None, header=1):
     return urls
 
 def export_articles(articles, format='csv', append=True):
-    
+
 
 
 def sample_urls(urls, size=0.25, random=True):
