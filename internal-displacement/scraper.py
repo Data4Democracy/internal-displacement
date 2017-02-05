@@ -4,6 +4,8 @@ import urllib
 from urllib import request
 import textract
 import os
+from collections import OrderedDict
+
 class Scraper(object):
     '''Scraper that accepts a url (or urls) and returns an instance of Article
     Parameters
@@ -42,7 +44,7 @@ class Scraper(object):
         -------
         report: dictionary containing page content and metadata
         '''
-        article = {}
+        article = OrderedDict()
         a = newspaper.Article(url)
         a.download()
         a.parse()
