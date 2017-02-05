@@ -31,7 +31,7 @@ class Scraper(object):
         if isinstance(urls, str):
             self.urls = [urls]
 
-    def html_report(self, url):
+    def html_article(self, url):
         '''Downloads and extracts content plus metadata for html page
         Parameters
         ----------
