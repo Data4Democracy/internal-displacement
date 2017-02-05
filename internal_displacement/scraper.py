@@ -81,7 +81,8 @@ def html_report(url):
                           article_content_type, article_authors, article_domain, url)
         return article
     else: ##Temporary fix to deal with https://github.com/codelucas/newspaper/issues/280
-        return Article("", datetime.datetime.now(), "retrieval_failed", "", "", "", "")
+        return Article("retrieval_failed","","", datetime.datetime.now(), "", "", url)
+
 
 
 def scrape(url):
