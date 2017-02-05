@@ -3,7 +3,7 @@ import csv
 from internal_displacement.article import Article
 import datetime
 import requests
-
+import numpy as np
 # Helper Functions #
 
 def remove_newline(text):
