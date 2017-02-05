@@ -134,20 +134,3 @@ class URLArticlePipelineSQL(object):
         return labels, features
 
 
-d = "/home/james/Documents/DataForDemocracy/internal-displacement/internal-displacement/datasets/IDMC Unite Ideas - Training dataset - TrainingDataset.csv"
-
-url_pipe = URLArticlePipelineSQL("sql_db.sqlite")
-url_pipe.process_urls(d, label_column="Tag")
-url_pipe.process_labeled_data(d)
-# features,labels = url_pipe.get_training_data()
-# print(features)
-# urls = [d.URL.values[1]]
-# print(urls)
-# up = URLArticlePipeline(urls)
-# up.save_articles_to_json_files("test_storage")
-#
-# up2 = URLArticlePipeline([])
-# up2.load_articles_from_json_files("test_storage")
-# for article in up2.articles:
-#     print(article.authors)
-#     print(article.domain)
