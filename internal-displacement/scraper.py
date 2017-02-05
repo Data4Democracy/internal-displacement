@@ -65,6 +65,7 @@ class Scraper(object):
             article['text'] = ''
             article['type'] = 'broken'
         return article
+        
     def get_pdf(url):
         ''' Takes a pdf url, downloads it and saves it locally.'''
         try:
@@ -86,6 +87,7 @@ class Scraper(object):
         text = text.replace('\n', ' ')   #can replace with a call to
         text = text.replace('\xa0', ' ') # the helper function. 
         return text
+
     def scrape(self, urls):
         '''Scrapes content and metadata from all pages in a list
         if URL is a .pdf calls get_body_text
