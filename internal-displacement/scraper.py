@@ -44,23 +44,15 @@ class Scraper(object):
         article = OrderedDict()
         a = newspaper.Article(url)
         a.download()
-        if len(a.html) > 0:
-            a.parse()
-            article['domain'] = a.source_url
-            article['title'] = a.title
-            article['authors'] = a.authors
-            article['date_pub'] = a.publish_date
-            article['text'] = remove_newline(a.text)
-            # tag the type of article
-            ## currently default to text but should be able to determine img/video etc
-            article['type'] = 'text'
-        else:
-            article['domain'] = ''
-            article['title'] = ''
-            article['authors'] = ''
-            article['date_pub'] = ''
-            article['text'] = ''
-            article['type'] = 'broken'
+        a.parse()
+        article['domain'] = a.source_url
+        article['title'] = a.title
+        article['authors'] = a.authors
+        article['date_pub'] = a.publish_date
+        article['text'] = remove_newline(a.text)
+        # tag the type of article
+        ## currently default to text but should be able to determine img/video etc
+        article['type'] = 'text'
         return article
 
     def scrape(self, urls):
