@@ -89,9 +89,9 @@ class Scraper(object):
             a.parse()
             article_domain = a.source_url
             article_title = a.title
-            print(article_title)
             article_authors = a.authors
             article_pub_date = a.publish_date
+            print(article_pub_date)
             article_text = remove_newline(a.text)
             # tag the type of article
             ## currently default to text but should be able to determine img/video etc
