@@ -95,6 +95,11 @@ class Scraper(object):
             ## currently default to text but should be able to determine img/video etc
             article['type'] = 'text'
         else:
+            article['domain'] = ''
+            article['title'] = ''
+            article['authors'] = ''
+            article['date_pub'] = ''
+            article['text'] = ''
             article['type'] = 'broken'
         return article
 
