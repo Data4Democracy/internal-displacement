@@ -100,13 +100,13 @@ class SQLArticleInterface(object):
         """
         Retrieves the labels and features for use in a classification task
         Returns:
-            Two numpy arrays; one containing texts and one containing labels.
+            Two lists; one containing texts and one containing labels.
         """
 
         training_cases = self.sql_cursor.execute(
-            "SELECT content,category FROM Articles INNER JOIN Labels ON Articles.url = Labels.url")
-        labels = np.array([r[1] for r in training_cases])
-        features = np.array(r[0] for r in training_cases)
+            "SELECT content,category FROM Articles INNER JOIN Labels ON Articles.url = Labels.url").fetchall()
+        labels = [r[1] for r in training_cases]
+        features = [r[0] for r in training_cases]
         return labels, features
 
 
