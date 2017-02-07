@@ -30,7 +30,7 @@ __Activities__
 ### Filtering (Interpreter)
 The third filtering requirement is more specific to the `internal-displacement` domain:
 
-- Filtering out documents not reporting on human mobility (binary classification)
+- Filtering oq  ut documents not reporting on human mobility (binary classification)
 
 __Activities:__
 - Implement filtering out of documents not reporting on human mobility (modeling)

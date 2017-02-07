@@ -5,7 +5,7 @@ class Filter(object):
     language and relevance of the article
     '''
 
-    def __init__:
+    def __init__(self):
         pass
 
     def check_language(self, article):

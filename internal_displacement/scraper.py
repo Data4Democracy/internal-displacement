@@ -2,10 +2,11 @@ import newspaper
 import csv
 import urllib
 from urllib import request
-from article import Article
+from internal_displacement.article import Article
 import textract
 import os
 from collections import OrderedDict
+import datetime
 
 
 def remove_newline(self, text):
@@ -17,33 +18,33 @@ def remove_newline(self, text):
 
 
 def html_report(url):
-"""Downloads and extracts content plus metadata for html page
-Parameters
-----------
-url: url of page to be scraped
+    """Downloads and extracts content plus metadata for html page
+    Parameters
+    ----------
+    url: url of page to be scraped
 
-Returns
--------
-article: An object of class Article containing the content and metadata.
-"""
+    Returns
+    -------
+    article: An object of class Article containing the content and metadata.
+    """
 
-a = newspaper.Article(url)
-a.download()
-if a.is_downloaded:
-    a.parse()
-    article_domain = a.source_url
-    article_title = a.title
-    article_authors = a.authors
-    article_pub_date = a.publish_date
-    article_text = remove_newline(a.text)
-    # tag the type of article
-    # currently default to text but should be able to determine img/video etc
-    article_content_type = 'text'
-    article = Article(article_text, article_pub_date, article_title,
-                      article_content_type, article_authors, article_domain, url)
-    return article
-else:  # Temporary fix to deal with https://github.com/codelucas/newspaper/issues/280
-    return Article("retrieval_failed", "", "", datetime.datetime.now(), "", "", url)
+    a = newspaper.Article(url)
+    a.download()
+    if a.is_downloaded:
+        a.parse()
+        article_domain = a.source_url
+        article_title = a.title
+        article_authors = a.authors
+        article_pub_date = a.publish_date
+        article_text = remove_newline(a.text)
+        # tag the type of article
+        # currently default to text but should be able to determine img/video etc
+        article_content_type = 'text'
+        article = Article(article_text, article_pub_date, article_title,
+                          article_content_type, article_authors, article_domain, url)
+        return article
+    else:  # Temporary fix to deal with https://github.com/codelucas/newspaper/issues/280
+        return Article("retrieval_failed", "", "", datetime.datetime.now(), "", "", url)
 
 
 def get_pdf(url):
@@ -71,20 +72,20 @@ def get_body_text(url):
 
 
 def scrape(url):
-"""
-Scrapes content and metadata from an url
-Parameters
-----------
-url: the url to be scraped
+    """
+    Scrapes content and metadata from an url
+    Parameters
+    ----------
+    url: the url to be scraped
 
-Returns
--------
-article: An article object prepared by scraping the url.
+    Returns
+    -------
+    article: An article object prepared by scraping the url.
 
 
-"""
-if "pdf" in url:
-    pass
-else:
-    article = html_report(url)
-    return article
+    """
+    if "pdf" in url:
+        pass
+    else:
+        article = html_report(url)
+        return article
