@@ -20,6 +20,7 @@ class Article(object):
         domain:                 the domain
         content_type:           the type of content (text,image,video etc)
         url:                    the url of the article
+        language:               the two-letter language code of the article
 
     """
 
@@ -31,6 +32,7 @@ class Article(object):
         self.domain = domain
         self.content_type = content_type
         self.url = url
+        self.language = ''
 
     def tag(self, tag):
         """Use interpreter to tag article
