@@ -2,6 +2,7 @@ import newspaper
 import csv
 import urllib
 from urllib import request
+from urllib.parse import urlparse
 from internal_displacement.article import Article
 import textract
 import os
@@ -17,7 +18,7 @@ def remove_newline(self, text):
     return text
 
 
-def html_report(url):
+def html_article(url):
     """Downloads and extracts content plus metadata for html page
     Parameters
     ----------
@@ -70,6 +71,17 @@ def get_body_text(url):
     text = text.replace('\xa0', ' ')  # the helper function.
     return text
 
+def pdf_article(url):
+    article_text = get_body_text(url)
+    article_domain = urlparse(url).hostname
+    article_content_type = 'pdf'
+    ## improve parsing of pdfs to extract these?
+    article_title = ''
+    article_pub_date = ''
+    article_authors = ''
+    article = Article(article_text, article_pub_date, article_title,
+                      article_content_type, article_authors, article_domain, url)
+    return article
 
 def scrape(url):
     """
@@ -85,7 +97,8 @@ def scrape(url):
 
     """
     if "pdf" in url:
-        pass
+        article = pdf_article(url)
+        return article
     else:
-        article = html_report(url)
+        article = html_article(url)
         return article
