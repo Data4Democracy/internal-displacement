@@ -180,6 +180,21 @@ class SQLArticleInterface(object):
         except Exception as e:
             print("Exception: {}".format(e))
 
+    def update_article(self, article):
+        """
+        Updates certain fields of article in database
+        Fields that can be updated are: language
+        :param article:     An Article object
+        """
+        language = article.language
+        url = article.url
+        try:
+            self.sql_cursor.execute("""UPDATE Articles SET language = ? WHERE url = ?""",
+                                    (language, url))
+            self.sql_connection.commit()
+        except Exception as e:
+            print("Exception: {}".format(e))
+
     def process_urls(self, url_csv, url_column="URL"):
         """
         Populate the Articles SQL table with the data scraped from urls in a csv file.
