@@ -24,7 +24,7 @@ class Article(object):
 
     """
 
-    def __init__(self, content, pub_date, title, content_type,authors,domain,url):
+    def __init__(self, content, pub_date, title, content_type, authors, domain, url):
         self.content = content
         self.publication_date = pub_date
         self.title = title
