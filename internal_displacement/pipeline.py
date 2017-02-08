@@ -9,6 +9,8 @@ import pandas as pd
 """
 CSV Functions
 """
+
+
 def csv_read(csvfile):
     '''
     Takes csv in the form of the training dataset and returns as list of lists
@@ -26,6 +28,7 @@ def csv_read(csvfile):
         dataset = list(reader)
     return dataset
 
+
 def csv2dict(csvfile):
     '''
     Takes csv in the form of the training dataset and returns as list of
@@ -42,6 +45,7 @@ def csv2dict(csvfile):
         reader = csv.DictReader(f)
         dataset = [line for line in reader]
     return dataset
+
 
 def urls_from_csv(dataset, column=None, header=1):
     '''
@@ -78,7 +82,7 @@ def urls_from_csv(dataset, column=None, header=1):
                              "Please use a valid column name.")
         else:
             raise ValueError("Column index not in range of dataset."
-                            "Please choose a valid column index.")
+                             "Please choose a valid column index.")
     # if no column specified, try to find by looking for
     elif column is None:
         first_row = dataset[header]
@@ -89,51 +93,52 @@ def urls_from_csv(dataset, column=None, header=1):
 
     return urls
 
+
 def sample_urls(urls, size=0.25, random=True):
-        '''Return a subsample of urls
-        Parameters
-        ----------
-        size: float or int, default 0.25.
-            If float, should be between 0.0 and 1.0 and is
-            the size of the subsample of return. If int, represents
-            the absolute size of the sample to return.
+    '''Return a subsample of urls
+    Parameters
+    ----------
+    size: float or int, default 0.25.
+        If float, should be between 0.0 and 1.0 and is
+        the size of the subsample of return. If int, represents
+        the absolute size of the sample to return.
 
-        random: boolean, default True
-            Whether or not to generate a random or direct subsample.
+    random: boolean, default True
+        Whether or not to generate a random or direct subsample.
 
-        Returns
-        -------
-        urls_sample: subsample of urls as Pandas Series
-        '''
-        if isinstance(size, int) and size <= len(urls):
-            sample_size = size
-        elif isinstance(size, int) and size > len(urls):
-            raise ValueError("Sample size cannot be larger than the"
-                             " number of urls.")
-        elif isinstance(size, float) and size >= 0.0 and size <= 1.0:
-            sample_size = int(size * len(urls))
-        else:
-            raise ValueError("Invalid sample size."
-                             " Please specify required sample size as"
-                             " a float between 0.0 and 1.0 or as an integer.")
+    Returns
+    -------
+    urls_sample: subsample of urls as Pandas Series
+    '''
+    if isinstance(size, int) and size <= len(urls):
+        sample_size = size
+    elif isinstance(size, int) and size > len(urls):
+        raise ValueError("Sample size cannot be larger than the"
+                         " number of urls.")
+    elif isinstance(size, float) and size >= 0.0 and size <= 1.0:
+        sample_size = int(size * len(urls))
+    else:
+        raise ValueError("Invalid sample size."
+                         " Please specify required sample size as"
+                         " a float between 0.0 and 1.0 or as an integer.")
 
-        if isinstance(random, bool):
-            randomize = random
-        else:
-            raise ValueError("Invalid value for random."
-                             " Please specify True or False.")
+    if isinstance(random, bool):
+        randomize = random
+    else:
+        raise ValueError("Invalid value for random."
+                         " Please specify True or False.")
 
-        if randomize:
-            return np.random.choice(urls, sample_size)
-        else:
-            return urls[:sample_size]
-
+    if randomize:
+        return np.random.choice(urls, sample_size)
+    else:
+        return urls[:sample_size]
 
 
 class SQLArticleInterface(object):
     """
     Core SQL interface.
     """
+
     def __init__(self, sql_database_file):
         """
         Initialize an instance of SQLArticleInterface with the path to a SQL database file.
@@ -141,11 +146,14 @@ class SQLArticleInterface(object):
             - If the file does exist, all previously stored data will be accessible through the object methods
         :param sql_database_file:   The path to the sql database file
         """
-        self.sql_connection = sqlite3.connect(sql_database_file, isolation_level=None)
+        self.sql_connection = sqlite3.connect(
+            sql_database_file, isolation_level=None)
         self.sql_cursor = self.sql_connection.cursor()
         self.sql_cursor.execute(
-            "CREATE TABLE IF NOT EXISTS Articles (title TEXT, url TEXT,author TEXT,datetime TEXT,domain TEXT, content TEXT, content_type TEXT)")
-        self.sql_cursor.execute("CREATE TABLE IF NOT EXISTS Labels (url TEXT,category TEXT)")
+            """CREATE TABLE IF NOT EXISTS Articles (title TEXT, url TEXT,author TEXT,datetime TEXT,domain TEXT,
+                content TEXT, content_type TEXT, language TEXT)""")
+        self.sql_cursor.execute(
+            "CREATE TABLE IF NOT EXISTS Labels (url TEXT,category TEXT)")
 
     def insert_article(self, article):
         """
@@ -159,14 +167,16 @@ class SQLArticleInterface(object):
         content = article.content
         content_type = article.content_type
         title = article.title
+        language = article.language
         if article.content == "retrieval_failed":
             return None
         try:
-            self.sql_cursor.execute("INSERT INTO Articles VALUES (?,?,?,?,?,?,?)",
-                                    (title, url, authors, pub_date, domain, content, content_type))
+            self.sql_cursor.execute("INSERT INTO Articles VALUES (?,?,?,?,?,?,?,?)",
+                                    (title, url, authors, pub_date, domain, content, content_type, language))
             self.sql_connection.commit()
         except sqlite3.IntegrityError:
-            print("URL{url} already exists in article table. Skipping.".format(self.url))
+            print(
+                "URL{url} already exists in article table. Skipping.".format(self.url))
         except Exception as e:
             print("Exception: {}".format(e))
 
@@ -181,7 +191,8 @@ class SQLArticleInterface(object):
         """
         dataset = csv_read(url_csv)
         urls = urls_from_csv(dataset, url_column)
-        existing_urls = [r[0] for r in self.sql_cursor.execute("SELECT url FROM Articles")]
+        existing_urls = [r[0]
+                         for r in self.sql_cursor.execute("SELECT url FROM Articles")]
         urls = [u for u in urls if u not in existing_urls]
 
         article_futures = []
@@ -200,7 +211,6 @@ class SQLArticleInterface(object):
                     print("Exception: {}".format(e))
 
     def process_labeled_data(self, csv_filepath, url_column_name="URL", label_column_name="Tag"):
-
         """
         Populates the Labels SQL table. URLs that are already present in the table will not be added again.
         :param csv_filepath: path to a csv file containing labeled URLS.
@@ -208,9 +218,11 @@ class SQLArticleInterface(object):
         :param label_column_name: a string containing the name of the label column name
 
         """
-        df = pd.read_csv(csv_filepath) # For now just using pandas, but could replace with a custom function
+        df = pd.read_csv(
+            csv_filepath)  # For now just using pandas, but could replace with a custom function
         urls = list(df[url_column_name].values)
-        existing_urls = [r[0] for r in self.sql_cursor.execute("SELECT url FROM Labels")]
+        existing_urls = [r[0]
+                         for r in self.sql_cursor.execute("SELECT url FROM Labels")]
         urls = [u for u in urls if u not in existing_urls]
         labels = list(df[label_column_name].values)
         values = list(zip(urls, labels))
@@ -229,5 +241,3 @@ class SQLArticleInterface(object):
         labels = [r[1] for r in training_cases]
         features = [r[0] for r in training_cases]
         return labels, features
-
-
