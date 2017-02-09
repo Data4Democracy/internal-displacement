@@ -68,6 +68,18 @@ def remove_newline(self, text):
     return text
 
 
+def format_date(date_string):
+    '''Formats date string from http headers
+    Returns standardized date format as string
+    '''
+    try:
+        dt = datetime.datetime.strptime(date_string, "%a, %d %b %Y %H:%M:%S %Z")
+        formatted_date = dt.strftime("%Y-%m-%d %H:%M:%S")
+    except ValueError:
+        formatted_date = ''
+    return formatted_date
+
+
 def html_article(url):
     """Downloads and extracts content plus metadata for html page
     Parameters
@@ -103,7 +115,9 @@ def get_pdf(url):
     ''' Takes a pdf url, downloads it and saves it locally.'''
     try:
         response = request.urlopen(url)  # not sure if this is needed?
+        publish_date = response.getheader('Last-Modified')
     except urllib.error.HTTPError as e:
+        publish_date = ''
         if e.getcode() != 404:
             raise
         else:
@@ -111,25 +125,26 @@ def get_pdf(url):
     pdf_file = open('file_to_convert.pdf', 'wb')
     pdf_file.write(response.read())
     pdf_file.close()
-    return os.path.join('./', 'file_to_convert.pdf')
+    return os.path.join('./', 'file_to_convert.pdf'), publish_date
 
 
 def get_body_text(url):
     ''' This function will extract all text from the url passed in
     '''
-    text = str(textract.process(get_pdf(url), method='pdfminer'), 'utf-8')
+    pdf_file, publish_date = get_pdf(url)
+    text = str(textract.process(get_pdf(pdf_file), method='pdfminer'), 'utf-8')
     text = text.replace('\n', ' ')  # can replace with a call to
     text = text.replace('\xa0', ' ')  # the helper function.
-    return text
+    publish_date = format_date(publish_date)
+    return text, publish_date
 
 
 def pdf_article(url):
-    article_text = get_body_text(url)
+    article_text, article_pub_date = get_body_text(url)
     article_domain = urlparse(url).hostname
     article_content_type = 'pdf'
     # improve parsing of pdfs to extract these?
     article_title = ''
-    article_pub_date = ''
     article_authors = ''
     article = Article(article_text, article_pub_date, article_title,
                       article_content_type, article_authors, article_domain, url)
