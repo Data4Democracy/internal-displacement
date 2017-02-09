@@ -130,13 +130,8 @@ def get_pdf(url):
 def get_body_text(url):
     ''' This function will extract all text from the url passed in
     '''
-<<<<<<< HEAD
-    pdf_file, publish_date = get_pdf(url)
-    text = str(textract.process(get_pdf(pdf_file), method='pdfminer'), 'utf-8')
-=======
-    flepath = get_pdf(url)
+    filepath, publish_date = get_pdf(url)
     text = str(textract.process(filepath, method='pdfminer'), 'utf-8')
->>>>>>> 060ce041622d524734bd64ed9400b53668ada864
     text = text.replace('\n', ' ')  # can replace with a call to
     text = text.replace('\xa0', ' ')  # the helper function.
     publish_date = format_date(publish_date)
