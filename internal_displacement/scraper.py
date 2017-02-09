@@ -136,12 +136,14 @@ def pdf_article(url):
     return article
 
 
-def scrape(url):
+def scrape(url, scrape_pdfs=True):
     """
     Scrapes content and metadata from an url
     Parameters
     ----------
     url: the url to be scraped
+    scrape_pdfs: determines whether pdf files will be scraped or not
+                 default: True
 
     Returns
     -------
@@ -150,9 +152,11 @@ def scrape(url):
 
     """
     pdf_check = is_pdf_consolidated_test(url)
-    if pdf_check:
+    if pdf_check and scrape_pdfs:
         article = pdf_article(pdf_check)
         return article
-    else:
+    elif not pdf_check:
         article = html_article(url)
         return article
+    else:
+        pass
