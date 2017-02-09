@@ -113,15 +113,21 @@ def get_pdf(url):
     pdf_file.close()
     return os.path.join('./', 'file_to_convert.pdf')
 
-
 def get_body_text(url):
     ''' This function will extract all text from the url passed in
     '''
-    text = str(textract.process(get_pdf(url), method='pdfminer'), 'utf-8')
+    flepath = get_pdf(url)
+    text = str(textract.process(filepath, method='pdfminer'), 'utf-8')
     text = text.replace('\n', ' ')  # can replace with a call to
     text = text.replace('\xa0', ' ')  # the helper function.
     return text
 
+def remove_pdf(filepath):
+    ''' Deletes pdf from disk
+    Not currently in use as pdfs downloads overwrite self, but may come in 
+    useful later if pdfs are downloaded and stored under different names.
+    '''
+    os.remove(filepath)
 
 def pdf_article(url):
     article_text = get_body_text(url)
@@ -136,12 +142,14 @@ def pdf_article(url):
     return article
 
 
-def scrape(url):
+def scrape(url, scrape_pdfs=True):
     """
     Scrapes content and metadata from an url
     Parameters
     ----------
     url: the url to be scraped
+    scrape_pdfs: determines whether pdf files will be scraped or not
+                 default: True
 
     Returns
     -------
@@ -150,9 +158,11 @@ def scrape(url):
 
     """
     pdf_check = is_pdf_consolidated_test(url)
-    if pdf_check:
+    if pdf_check and scrape_pdfs:
         article = pdf_article(pdf_check)
         return article
-    else:
+    elif not pdf_check:
         article = html_article(url)
         return article
+    else:
+        pass
