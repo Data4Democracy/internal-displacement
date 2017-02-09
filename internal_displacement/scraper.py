@@ -60,7 +60,7 @@ def is_pdf_consolidated_test(url):
     return False
 
 
-def remove_newline(self, text):
+def remove_newline(text):
     ''' Removes new line and &nbsp characters.
     '''
     text = text.replace('\n', ' ')
