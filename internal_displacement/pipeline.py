@@ -5,6 +5,8 @@ import concurrent
 from concurrent import futures
 import sqlite3
 import pandas as pd
+import numpy as np
+
 
 """
 CSV Functions
