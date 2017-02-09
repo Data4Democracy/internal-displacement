@@ -8,6 +8,56 @@ import textract
 import os
 from collections import OrderedDict
 import datetime
+from bs4 import BeautifulSoup
+import re
+
+
+# PDF helper functions
+def is_pdf_simple_tests(url):
+    '''Test a url to see if it is a pdf by looking at url and content headers
+    If so, return the relevant pdf url for parsing
+    '''
+    # Simple url-based test
+    if re.search(r'\.pdf$', url):
+        return url
+
+    # Test based on headers
+    page = request.urlopen(url)
+    content_type = response.getheader('Content-Type')
+    if content_type == 'application/pdf':
+        return url
+
+
+def is_pdf_iframe_test(url):
+    '''Test a url to see if the page contains an iframe
+    and if the iframe content is pdf or not; if True, return the pdf url
+    '''
+    page = request.urlopen(url)
+    soup = BeautifulSoup(page, "html.parser")
+    iframes = soup.find_all('iframe')
+    if len(iframes) > 0:
+        for frame in iframes:
+            src = frame.attrs['src']
+            if is_pdf_simple_tests(src):
+                return src
+
+
+def is_pdf_consolidated_test(url):
+    '''Run a series of tests to determine if it is a pdf
+    If True, return the relevant url
+    '''
+
+    # Carry out simple tests based upon url and content type
+    pdf_attempt_1 = is_pdf_simple_tests(url)
+    if pdf_attempt_1:
+        return pdf_attempt_1
+
+    # Carry out additional test based by looking for iframe
+    pdf_attempt_2 = is_pdf_iframe_test(url)
+    if pdf_attempt_2:
+        return pdf_attempt_2
+
+    return False
 
 
 def remove_newline(self, text):
@@ -39,7 +89,8 @@ def html_article(url):
         article_pub_date = a.publish_date
         article_text = remove_newline(a.text)
         # tag the type of article
-        # currently default to text but should be able to determine img/video etc
+        # currently default to text but should be able to determine img/video
+        # etc
         article_content_type = 'text'
         article = Article(article_text, article_pub_date, article_title,
                           article_content_type, article_authors, article_domain, url)
@@ -71,17 +122,19 @@ def get_body_text(url):
     text = text.replace('\xa0', ' ')  # the helper function.
     return text
 
+
 def pdf_article(url):
     article_text = get_body_text(url)
     article_domain = urlparse(url).hostname
     article_content_type = 'pdf'
-    ## improve parsing of pdfs to extract these?
+    # improve parsing of pdfs to extract these?
     article_title = ''
     article_pub_date = ''
     article_authors = ''
     article = Article(article_text, article_pub_date, article_title,
                       article_content_type, article_authors, article_domain, url)
     return article
+
 
 def scrape(url):
     """
@@ -96,8 +149,9 @@ def scrape(url):
 
 
     """
-    if "pdf" in url:
-        article = pdf_article(url)
+    pdf_check = is_pdf_consolidated_test(url)
+    if pdf_check:
+        article = pdf_article(pdf_check)
         return article
     else:
         article = html_article(url)
