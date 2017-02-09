@@ -197,7 +197,7 @@ class SQLArticleInterface(object):
         except Exception as e:
             print("Exception: {}".format(e))
 
-    def process_urls(self, url_csv, url_column="URL"):
+    def process_urls(self, url_csv, url_column="URL", scrape_pdfs=True):
         """
         Populate the Articles SQL table with the data scraped from urls in a csv file.
         URLS that are already in the table will not be added again.
@@ -215,7 +215,7 @@ class SQLArticleInterface(object):
         article_futures = []
         with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
             for url in urls:
-                article_futures.append(executor.submit(scrape, url))
+                article_futures.append(executor.submit(scrape, url, scrape_pdfs))
             for f in concurrent.futures.as_completed(article_futures):
                 try:
                     article = f.result()

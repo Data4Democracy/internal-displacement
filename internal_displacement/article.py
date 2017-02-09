@@ -24,7 +24,7 @@ class Article(object):
 
     """
 
-    def __init__(self, content, pub_date, title, content_type, authors, domain, url,language=""):
+    def __init__(self, content, pub_date, title, content_type, authors, domain, url, language=""):
         self.content = content
         self.publication_date = pub_date
         self.title = title
@@ -36,6 +36,7 @@ class Article(object):
 
     def change_language(self,language):
         self.language = language
+
     def tag(self, tag):
         """Use interpreter to tag article
         """
