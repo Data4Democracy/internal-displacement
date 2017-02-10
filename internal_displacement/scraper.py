@@ -38,6 +38,7 @@ def is_pdf_iframe_test(url):
     if len(iframes) > 0:
         for frame in iframes:
             src = frame.attrs['src']
+            # should probably replace with something more robust
             if 'http' in src:
                 if is_pdf_simple_tests(src):
                     return src
