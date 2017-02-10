@@ -95,6 +95,20 @@ def urls_from_csv(dataset, column=None, header=1):
 
     return urls
 
+def sql_to_csv(db, table, output):
+    try:
+        con = sqlite3.connect(db)
+    except ValueError:
+        print("Not a valid database.")
+    cur = con.cursor()
+    try:
+        data = cur.execute("SELECT * FROM " + table)
+    except ValueError:
+        print("Not a valid table.")
+    with open(output, 'w') as f:
+        writer = csv.writer(f)
+        writer.writerow(headers)
+        writer.writerows(data)
 
 def sample_urls(urls, size=0.25, random=True):
     '''Return a subsample of urls
