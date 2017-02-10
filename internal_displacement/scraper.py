@@ -77,7 +77,7 @@ def format_date(date_string):
     try:
         dt = datetime.datetime.strptime(date_string, "%a, %d %b %Y %H:%M:%S %Z")
         formatted_date = dt.strftime("%Y-%m-%d %H:%M:%S")
-    except ValueError:
+    except (ValueError, TypeError):
         formatted_date = ''
     return formatted_date
 
@@ -118,26 +118,25 @@ def get_pdf(url):
     try:
         response = request.urlopen(url)  # not sure if this is needed?
         publish_date = response.getheader('Last-Modified')
+        pdf_file = open('file_to_convert.pdf', 'wb')
+        pdf_file.write(response.read())
+        pdf_file.close()
+        return os.path.join('./', 'file_to_convert.pdf'), publish_date
     except urllib.error.HTTPError as e:
-        publish_date = ''
-        if e.getcode() != 404:
-            raise
-        else:
-            print('Error 404')
-    pdf_file = open('file_to_convert.pdf', 'wb')
-    pdf_file.write(response.read())
-    pdf_file.close()
-    return os.path.join('./', 'file_to_convert.pdf'), publish_date
+        return '', ''
 
 def get_body_text(url):
     ''' This function will extract all text from the url passed in
     '''
     filepath, publish_date = get_pdf(url)
-    text = str(textract.process(filepath, method='pdfminer'), 'utf-8')
-    text = text.replace('\n', ' ')  # can replace with a call to
-    text = text.replace('\xa0', ' ')  # the helper function.
-    publish_date = format_date(publish_date)
-    return text, publish_date
+    if filepath == '':
+        return '', ''
+    else:
+        text = str(textract.process(filepath, method='pdfminer'), 'utf-8')
+        text = text.replace('\n', ' ')  # can replace with a call to
+        text = text.replace('\xa0', ' ')  # the helper function.
+        publish_date = format_date(publish_date)
+        return text, publish_date
 
 def remove_pdf(filepath):
     ''' Deletes pdf from disk
@@ -148,14 +147,17 @@ def remove_pdf(filepath):
 
 def pdf_article(url):
     article_text, article_pub_date = get_body_text(url)
-    article_domain = urlparse(url).hostname
-    article_content_type = 'pdf'
-    # improve parsing of pdfs to extract these?
-    article_title = ''
-    article_authors = ''
-    article = Article(article_text, article_pub_date, article_title,
-                      article_content_type, article_authors, article_domain, url)
-    return article
+    if article_text == '':
+        return Article("retrieval_failed", "", "", datetime.datetime.now(), "", "", url)
+    else:
+        article_domain = urlparse(url).hostname
+        article_content_type = 'pdf'
+        # improve parsing of pdfs to extract these?
+        article_title = ''
+        article_authors = ''
+        article = Article(article_text, article_pub_date, article_title,
+                          article_content_type, article_authors, article_domain, url)
+        return article
 
 
 def scrape(url, scrape_pdfs=True):
