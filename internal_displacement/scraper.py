@@ -23,7 +23,7 @@ def is_pdf_simple_tests(url):
 
     # Test based on headers
     page = request.urlopen(url)
-    content_type = response.getheader('Content-Type')
+    content_type = page.getheader('Content-Type')
     if content_type == 'application/pdf':
         return url
 
@@ -38,8 +38,9 @@ def is_pdf_iframe_test(url):
     if len(iframes) > 0:
         for frame in iframes:
             src = frame.attrs['src']
-            if is_pdf_simple_tests(src):
-                return src
+            if 'http' in src:
+                if is_pdf_simple_tests(src):
+                    return src
 
 
 def is_pdf_consolidated_test(url):
