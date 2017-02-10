@@ -4,3 +4,5 @@ notebooks/test.ipynb
 notebooks/.ipynb_checkpoints/*.ipynb
 .ipynb_checkpoints/*.ipynb
 id-tests.ipynb
+*.sqlite
+*.pdf
