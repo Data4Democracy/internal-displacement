@@ -1,2 +1,3 @@
 *.csv
 *.pyc
+internal_displacement/__pycache__/*
