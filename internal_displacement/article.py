@@ -6,7 +6,8 @@ def date_time_converter(dt):
     if isinstance(dt,datetime.datetime):
         return dt.__str__()
     else:
-        raise ValueError("{} is not a valid datetime object")
+        return "Invalid datetime"
+#        raise ValueError("{} is not a valid datetime object")
 
 
 class Article(object):

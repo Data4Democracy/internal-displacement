@@ -3,7 +3,7 @@ import csv
 import urllib
 from urllib import request
 from urllib.parse import urlparse
-from article import Article
+from internal_displacement.article import Article
 import textract
 import os
 from collections import OrderedDict
@@ -38,6 +38,7 @@ def is_pdf_iframe_test(url):
     if len(iframes) > 0:
         for frame in iframes:
             src = frame.attrs['src']
+            # should probably replace with something more robust
             if 'http' in src:
                 if is_pdf_simple_tests(src):
                     return src
@@ -61,7 +62,7 @@ def is_pdf_consolidated_test(url):
     return False
 
 
-def remove_newline(self, text):
+def remove_newline(text):
     ''' Removes new line and &nbsp characters.
     '''
     text = text.replace('\n', ' ')
