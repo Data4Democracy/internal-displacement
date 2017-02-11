@@ -9,11 +9,17 @@ def country_code(country_name):
     '''Find the ISO-3166 alpha_2 country code 
     for a given country name
     '''
+    if 'the' in country_name:
+        country_name = country_name.replace("the", "").strip()
     try:
-        country_code = pycountry.countries.get(name=country_name).alpha_2
-        return country_code
+        code = pycountry.countries.get(name=country_name).alpha_2
+        return code
     except KeyError:
-        return False
+        try:
+            code = pycountry.countries.get(official_name=country_name).alpha_2
+            return code
+        except KeyError:
+            return None
 
 
 class Interpreter(object):
