@@ -95,20 +95,7 @@ def urls_from_csv(dataset, column=None, header=1):
 
     return urls
 
-def sql_to_csv(db, table, output):
-    try:
-        con = sqlite3.connect(db)
-    except ValueError:
-        print("Not a valid database.")
-    cur = con.cursor()
-    try:
-        data = cur.execute("SELECT * FROM " + table)
-    except ValueError:
-        print("Not a valid table.")
-    with open(output, 'w') as f:
-        writer = csv.writer(f)
-        writer.writerow(headers)
-        writer.writerows(data)
+
 
 def sample_urls(urls, size=0.25, random=True):
     '''Return a subsample of urls
@@ -259,6 +246,22 @@ class SQLArticleInterface(object):
         values = list(zip(urls, labels))
         self.sql_cursor.executemany("INSERT INTO Labels VALUES (?, ?)", values)
         self.sql_connection.commit()
+
+    def to_csv(self, table, output):
+        """
+        Method to export SQL table to CSV file.
+        :param table: The name of the table to export
+        :param output: The path of the output file
+        """
+        try:
+            data = self.sql_cursor.execute("SELECT * FROM " + table)
+            headers = cursor = list(map(lambda x: x[0], self.sql_cursor.description))
+        except ValueError:
+            print("Not a valid table.")
+        with open(output, 'w') as f:
+            writer = csv.writer(f)
+            writer.writerow(headers)
+            writer.writerows(data)
 
     def get_training_data(self):
         """
