@@ -15,11 +15,12 @@ def country_code(country_name):
         code = pycountry.countries.get(name=country_name).alpha_2
         return code
     except KeyError:
-        try:
-            code = pycountry.countries.get(official_name=country_name).alpha_2
-            return code
-        except KeyError:
-            return None
+        pass
+    try:
+        code = pycountry.countries.get(official_name=country_name).alpha_2
+        return code
+    except KeyError:
+        return None
 
 
 class Interpreter(object):
