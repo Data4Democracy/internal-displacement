@@ -19,7 +19,7 @@ We are using a Python back end to scrape, tag, classify and extract information 
 
 1. Join the [Slack channel]((https://datafordemocracy.slack.com/messages/internal-displacement/)).
 2. Read the rest of this page to understand the project.
-* Browse the repository [issues](https://github.com/Data4Democracy/internal-displacement/issues) for `help-wanted`, `beginner-friendly`, and `discussion` tags.
+* We use [issues](https://github.com/Data4Democracy/internal-displacement/issues) (small tasks) and [milestones](https://github.com/Data4Democracy/internal-displacement/milestones) (bigger objectives) to guide the project. Browse them to find where you can help. Keep an eye out for `help-wanted`, `beginner-friendly`, and `discussion` tags. 
 * See something you want to work on? Before you start to work on it, make a comment under the issue or ping us on Slack so we can assign you the task or discuss it.
 * Before writing any code, make sure you've read the [steps for contributing to a D4D project on GitHub](https://github.com/Data4Democracy/github-playground).
 * Write your code and submit a pull request to add it to the project. Reach out for help any time!
