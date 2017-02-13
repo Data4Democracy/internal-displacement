@@ -43,12 +43,12 @@ These are the main parts and functions that make up the project.
  * Store the information in a database
 * **Interpreter**
  * Classify URLs as *conflict/violence*, *disaster* or *other*. There is a [training dataset](https://www.dropbox.com/s/50sgd3mztuhf5f6/training_dataset.csv?dl=0) to help with tagging.
- * Extract information from articles within URLs: location and number of reporting units (households or individuals) displaced, date published and reporting term (conflict/violence, disaster or other). The larger [extended input dataset](https://www.dropbox.com/s/2qt52uy1g3ci4rr/idmc_uniteideas_input_full.csv?dl=0) and the text from articles we have already scraped can be used to help here.
+ * Extract information from articles: location and number of reporting units (households or individuals) displaced, date published and reporting term (conflict/violence, disaster or other). The larger [extended input dataset](https://www.dropbox.com/s/2qt52uy1g3ci4rr/idmc_uniteideas_input_full.csv?dl=0) and the text from articles we have already scraped can be used to help here.
 * **Visualizer**
  * A mapping tool to visualize the displacement figures and locations, identify hotspots and trends.
  * Other visualizations for a selected region to identify reporting frequency on the area
  * Visualizing the excerpts of documents where the relevant information is reported (either looking at the map or browsing the list of URLs).
- * Visualise relability of 
+ * Visualise relability of classification and information extraction algorithms (either overall or by article)
  * Some pre-tagged datasets ([1](https://www.dropbox.com/s/p42dq6gxvdugo3d/counts_displaced_idmc_uniteideas_input_full_conflict_tag.csv?dl=0), [2](https://www.dropbox.com/s/0h71jlfc5tmm7bk/counts_evacuation_idmc_uniteideas_input_full_conflict_tag.csv?dl=0)) can be used to start exploring visualization options.
 * **App**
  * A non-technical-user friendly front end to wrap around the components above for inputting URLs, managing the databases, verifying data and interacting with visualisations
