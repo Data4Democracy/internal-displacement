@@ -18,9 +18,9 @@ We are using a Python back end to scrape, tag, classify and extract information 
 ## Getting started:
 
 1. Join the [Slack channel]((https://datafordemocracy.slack.com/messages/internal-displacement/)).
-2. Read the rest of this page to understand the project.
+2. Read the rest of this page and the [IDETECT challenge page](https://unite.un.org/ideas/content/idetect) to understand the project.
 * We use [issues](https://github.com/Data4Democracy/internal-displacement/issues) (small tasks) and [milestones](https://github.com/Data4Democracy/internal-displacement/milestones) (bigger objectives) to guide the project. Browse them to find where you can help. Keep an eye out for `help-wanted`, `beginner-friendly`, and `discussion` tags. 
-* See something you want to work on? Before you start to work on it, make a comment under the issue or ping us on Slack so we can assign you the task or discuss it.
+* See something you want to work on? Before you start on it, make a comment under the issue or ping us on Slack so we can assign you the task or discuss it.
 * Before writing any code, make sure you've read the [steps for contributing to a D4D project on GitHub](https://github.com/Data4Democracy/github-playground).
 * Write your code and submit a pull request to add it to the project. Reach out for help any time!
 
@@ -33,6 +33,8 @@ We are using a Python back end to scrape, tag, classify and extract information 
 ## Project Overview and Progress
 
 ### Project Components
+
+These are the main parts and functions that make up the project.
 
 * **Scraper and Pipeline**
  * Take lists of URLs as input from [input dataset](https://www.dropbox.com/s/c2vzdzrljlrn3y0/idmc_uniteideas_input_url.csv?dl=0)
@@ -50,6 +52,7 @@ We are using a Python back end to scrape, tag, classify and extract information 
  * Some pre-tagged datasets ([1](https://www.dropbox.com/s/p42dq6gxvdugo3d/counts_displaced_idmc_uniteideas_input_full_conflict_tag.csv?dl=0), [2](https://www.dropbox.com/s/0h71jlfc5tmm7bk/counts_evacuation_idmc_uniteideas_input_full_conflict_tag.csv?dl=0)) can be used to start exploring visualization options.
 * **App**
  * A non-technical-user friendly front end to wrap around the components above for inputting URLs, managing the databases, verifying data and interacting with visualisations
+ * Automation of scraping, pipeline and interpreter
 
 ### Progress
 
