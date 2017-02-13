@@ -32,6 +32,25 @@ We are using a Python back end to scrape, tag, classify and extract information 
 
 ## Project Overview and Progress
 
+The final aim is to create a user friendly app that can take in many URLs that link to news articles and return a database populated with a row for each article that includes:
+
+- URL
+- Number of times URL has been submitted
+- Main text
+- Source (eg. new york times)
+- Publication date
+- Title
+- Author(s)
+- Language of article
+- Reason for displacement (violence/disaster/other)
+- The location where the displacement happened
+- Reporting term: displaced/evacuated/forced to fee/homeless/in relief camp/sheltered/relocated/destroyed housing/partially destroyed housing/uninhabitable housing
+- Reporting unit: people/persons/individuals/children/inhabitants/residents/migrants or families/households/houses/homes
+- Number displaced
+- Metrics relating to machine learning accuracy and reliability
+
+This information can then be used to analyse the flow of internally displaced people, details about reporting and to improve the classification and NLP elements of the program.
+
 ### Project Components
 
 These are the main parts and functions that make up the project.
