@@ -20,15 +20,27 @@ for link in sorted(links):
     key = link[begin+1:end]
 
     if key not in unique_links:
-        unique_links[key] = link
+        unique_links[key] = link.replace(".csv?dl=0",".csv?dl=1")
 
 print ("The downloadable files are: ")
 print (" ")
-for key, value in unique_links.items():
+for key, _ in unique_links.items():
     print(key)
 print(" ")
 
-choice = input("Which one do you want to download .Separate by comma if more than one and type all to download the entire dataset ")
-exit()
+choice = input("Which one do you want to download .Separate by comma(no spaces) if more than one and type all to download the entire dataset ")
 
-urllib.request.urlretrieve("https://www.dropbox.com/sh/rukexajbm9fsmd4/AAADo5IW2O9nA1Ejp9xSER0ka/training_dataset.csv?dl=1", "teste.csv")
+if choice != 'all':
+    files = choice.split(',')
+else:
+    files = [key for key, _ in unique_links.items()]
+    print(files)
+
+for file_name in files:
+    if file_name in unique_links:
+        print ("Downloading " + file_name)
+        urllib.request.urlretrieve(unique_links[file_name],file_name)
+    else:
+        print ("No file named "+ file_name)
+
+print("Done. The requested files are downloaded! ")
