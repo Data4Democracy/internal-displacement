@@ -1,3 +1,5 @@
+#just a really simple script to help developers download dataset
+
 import urllib.request
 
 response = urllib.request.urlopen("https://www.dropbox.com/sh/rukexajbm9fsmd4/AAAMZ3-kWS8wFhfphxAxTmfNa?dl=0")
