@@ -153,7 +153,7 @@ class SQLArticleInterface(object):
             sql_database_file, isolation_level=None)
         self.sql_cursor = self.sql_connection.cursor()
         self.sql_cursor.execute(
-            """CREATE TABLE IF NOT EXISTS Articles (title TEXT, url TEXT,author TEXT,datetime TEXT,domain TEXT,
+            """CREATE TABLE IF NOT EXISTS Articles (title TEXT, url TEXT,author TEXT,publish_date TEXT,domain TEXT,
                 content TEXT, content_type TEXT, language TEXT)""")
         self.sql_cursor.execute(
             "CREATE TABLE IF NOT EXISTS Labels (url TEXT,category TEXT)")
