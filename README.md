@@ -42,7 +42,7 @@ The final aim is to create a user friendly app that can take in many URLs that l
 - Title
 - Author(s)
 - Language of article
-- Reason for displacement (violence/disaster/other)
+- Reason for displacement (violence/disaster/both/other)
 - The location where the displacement happened
 - Reporting term: displaced/evacuated/forced to fee/homeless/in relief camp/sheltered/relocated/destroyed housing/partially destroyed housing/uninhabitable housing
 - Reporting unit: people/persons/individuals/children/inhabitants/residents/migrants or families/households/houses/homes
