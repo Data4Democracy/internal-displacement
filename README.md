@@ -69,7 +69,7 @@ These are the main parts and functions that make up the project.
  * Visualizing the excerpts of documents where the relevant information is reported (either looking at the map or browsing the list of URLs).
  * Visualise relability of classification and information extraction algorithms (either overall or by article)
  * Some pre-tagged datasets ([1](https://www.dropbox.com/s/p42dq6gxvdugo3d/counts_displaced_idmc_uniteideas_input_full_conflict_tag.csv?dl=0), [2](https://www.dropbox.com/s/0h71jlfc5tmm7bk/counts_evacuation_idmc_uniteideas_input_full_conflict_tag.csv?dl=0)) can be used to start exploring visualization options.
-* **App**
+* **App** [separate repository for web framework](https://github.com/Data4Democracy/internal-displacement-web)
  * A non-technical-user friendly front end to wrap around the components above for inputting URLs, managing the databases, verifying data and interacting with visualisations
  * Automation of scraping, pipeline and interpreter
 
