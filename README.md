@@ -11,6 +11,7 @@ We are using a Python back end to scrape, tag, classify and extract information 
 - [@grichardson](https://datafordemocracy.slack.com/messages/@grichardson/)
 
 **Maintainers:** These are the additional people mainly responsible for reviewing pull requests, providing feedback and monitoring issues.
+
 Scraping, processing, NLP
 - [@simonb](https://datafordemocracy.slack.com/messages/@simonb/)
 - [@jlln](https://datafordemocracy.slack.com/messages/@jlln/)
