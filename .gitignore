@@ -6,3 +6,4 @@ notebooks/.ipynb_checkpoints/*.ipynb
 id-tests.ipynb
 *.sqlite
 *.pdf
+.DS_Store
