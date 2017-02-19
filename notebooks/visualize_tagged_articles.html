@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	<script type="text/javascript" src="https://github.com/explosion/displacy-ent/blob/master/assets/js/displacy-ent.js"></script>
+</head>
+<body>
+
+<style type="text/css">
+	.entities {
+    line-height: 2;
+}
+
+[data-entity] {
+    padding: 0.25em 0.35em;
+     margin: 0px 0.25em;
+     line-height: 1;
+     display: inline-block;
+     border-radius: 0.25em;
+     border: 1px solid;
+}
+
+[data-entity]::after {
+    box-sizing: border-box;
+    content: attr(data-entity);
+    font-size: 0.6em;
+    line-height: 1;
+    padding: 0.35em;
+    border-radius: 0.35em;
+    text-transform: uppercase;
+    display: inline-block;
+    vertical-align: middle;
+    margin: 0px 0px 0.1rem 0.5rem;
+}
+
+[data-entity][data-entity="term"] {
+    background: rgba(166, 226, 45, 0.2);
+    border-color: rgb(166, 226, 45);
+}
+
+[data-entity][data-entity="term"]::after {
+    background: rgb(166, 226, 45);
+}
+
+[data-entity][data-entity="unit"] {
+    background: rgba(67, 198, 252, 0.2);
+    border-color: rgb(67, 198, 252);
+}
+
+[data-entity][data-entity="unit"]::after {
+    background: rgb(67, 198, 252);
+}
+
+[data-entity][data-entity="date"] {
+    background: rgba(47, 187, 171, 0.2);
+    border-color: rgb(47, 187, 171);
+}
+
+[data-entity][data-entity="date"]::after {
+    background: rgb(47, 187, 171);
+}
+
+[data-entity][data-entity="num"] {
+    background: rgba(203, 24, 29, 0.2);
+    border-color: rgb(203, 24, 29);
+}
+
+[data-entity][data-entity="num"]::after {
+    background: rgb(203, 24, 29);
+}
+
+[data-entity][data-entity="loc"] {
+    background: rgba(136, 65, 157, 0.2);
+    border-color: rgb(136, 65, 157);
+}
+
+[data-entity][data-entity="loc"]::after {
+    background: rgb(136,65,157);
+}
+</style>
+
+<div class="entities">
+	<p><span style="font-weight: bold">Article 1</span></p>
+    <p>
+    Flash flooding across Afghanistan and Pakistan has left more than 160 dead and dozens stranded in one of South Asia\'s worst natural disasters this year, say officials.  The flooding, caused by unusually heavy rain, has left villagers stuck in remote areas without shelter, food or power.  Mountainous Afghanistan was the worst hit, with 61 people <mark data-entity="term">killed</mark> and approximately 500 traditional mud-brick homes washed away in more than a dozen villages in <mark data-entity="loc">Sarobi</mark><mark data-entity="unit">homes</mark><mark data-entity="num">500</mark> traditional mud-brick homes washed away in more than a dozen villages in Sarobi, a rural district less than an hour from Kabul, officials said.  Floods left a village devastated in the remote eastern Afghan province of Nuristan. At least 60 homes were <mark data-entity="term">destroyed</mark><mark data-entity="unit">homes</mark><mark data-entity="num">60</mark> homes were destroyed across three districts, said provincial spokesman Mohammad Yusufi. No one was killed.  Authorities have been unable to deliver aid to some badly affected villages by land as roads in the area are controlled by the Taliban, Yusufi added.  “We have asked the national government for help as have an overwhelming number of locals asking for assistance, but this is a Taliban-ridden area,” Yusufi said.  At least 24 people were also <mark data-entity="term">died</mark> in two other eastern border provinces, <mark data-entity="loc">Khost</mark> and <mark data-entity="loc">Nangarhar</mark><mark data-entity="unit">people</mark><mark data-entity="num">24</mark> people were also died in two other eastern border provinces, Khost and Nangarhar, according to local officials. More than fifty homes and shops were <mark data-entity="term">destroyed</mark><mark data-entity="unit">homes</mark><mark data-entity="num">fifty</mark> homes and <mark data-entity="unit">shops</mark> were destroyed and thousands of acres of farmland flooded.  In Pakistan monsoon rains claimed more than 80 lives, local media reported. Houses <mark data-entity="term">collapsing</mark><mark data-entity="unit">Houses</mark> collapsing, drowning and electrocution all pushed up the death toll, said Sindh Information Minister Sharjeel Inam Memon.  In Karachi, the commercial capital and a southern port city that is home to 18 million people, poor neighborhoods were submerged waist-deep in water and many precincts suffered long power outages. Deaths were also reported in the north and west of the country.
+    </p>
+</div>
+
+<div class="entities">
+	<p><span style="font-weight: bold">Article 2</span></p>
+    <p>
+    Afghanistan state news agency, Bakhtar News Agency (BNA) report that at least 7 people have been <mark data-entity="term">killed</mark><mark data-entity="unit">people</mark><mark data-entity="num">7</mark> people have been killed in flash floods in Faryab Province in the north of the country. Flash <mark data-entity="term">floods</mark> in <mark data-entity="loc">Baghlan Province</mark> have <mark data-entity="term">killed</mark><mark data-entity="loc">Baghlan Province</mark> have killed 1 <mark data-entity="unit">person</mark><mark data-entity="num">1</mark> person and injured around 10 others.  Flash floods struck on 08 May 2015 in Faryab Province after a period of heavy rainfall. The districts of Garyzan, Pashtunkot and Belcheragh were worst affected. BNA report that at least 7 people were <mark data-entity="term">killed</mark><mark data-entity="unit">people</mark><mark data-entity="num">7</mark> people were killed and over 1,500 homes damaged. The Faizabada-Takhar highway have been closed to traffic and wide areas of crops and orchards have suffered damaged.  Kuwaiti News Agency (KUNA) also report that <mark data-entity="term">flooding</mark> struck in the Baghlan-i-Markazi district of <mark data-entity="loc">Baghlan</mark> province, where 1 person was killed and several injured early on <mark data-entity="date">Saturday 09 May 2015</mark><mark data-entity="term">killed</mark><mark data-entity="loc">Baghlan</mark> province, where 1 person was killed and several injured early on <mark data-entity="date">Saturday 09 May 2015</mark><mark data-entity="unit">person</mark><mark data-entity="num">1</mark> person was killed and several injured early on Saturday 09 May 2015.  “There was heavy rain in Baghlan-e-Markazi district Friday evening and the people left their houses to safer areas. It was early Saturday when a flash <mark data-entity="term">flood</mark> hit the area and <mark data-entity="term">washed</mark> away more than 500 <mark data-entity="unit">houses</mark><mark data-entity="num">500</mark> houses,” district Governor Gohar Khan Babri told reporters in provincial capital Pul-e-Khumri, 160 km north of Kabul.
+    </p>
+</div>
+
+</body>
+</html>
