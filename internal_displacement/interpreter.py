@@ -384,11 +384,12 @@ class Interpreter(object):
         returns: A named Fact tuple of reporting term, unit, quantity and extracted
                 token spans: namedtuple
         """
-        spans = []
+        facts = []
         reporting_term, reporting_unit, reporting_quantity = None, None, None
         tokens = list(sentence.__iter__())
         for i, token in enumerate(tokens):
             if token.lemma_ in self.reporting_term_lemmas:
+                spans = []
                 term_span = {'start': token.idx, 'end': len(
                     token) + token.idx, 'type': 'TERM'}
                 spans.append(term_span)
@@ -401,8 +402,8 @@ class Interpreter(object):
                         child)
                     if reporting_unit:
                         spans.extend(child_spans)
-                        return Fact(term=reporting_term, unit=reporting_unit, quantity=reporting_quantity, token_spans=spans)
-        return Fact(term=reporting_term, unit=reporting_unit, quantity=reporting_quantity, token_spans=spans)
+                        facts.append(Fact(term=reporting_term, unit=reporting_unit, quantity=reporting_quantity, token_spans=spans))
+        return facts
 
     def check_combination(self, term, unit):
         """
@@ -449,12 +450,13 @@ class Interpreter(object):
                 last_location, last_location_span = possible_locations, location_span
 
             # Try and get terms / and or quantities
-            fact = self.extract_facts_from_sentence(sentence)
-            if self.check_combination(fact.term, fact.unit):
-                fact_spans = fact.token_spans
-                fact_spans.extend(last_date_span)
-                fact_spans.extend(last_location_span)
-                report = Report(last_location, last_date,
-                                fact.term, fact.unit, fact.quantity, article.content, fact_spans)
-                reports.append(report)
+            facts = self.extract_facts_from_sentence(sentence)
+            for fact in facts:
+                if self.check_combination(fact.term, fact.unit):
+                    fact_spans = fact.token_spans
+                    fact_spans.extend(last_date_span)
+                    fact_spans.extend(last_location_span)
+                    report = Report(last_location, last_date,
+                                    fact.term, fact.unit, fact.quantity, article.content, fact_spans)
+                    reports.append(report)
         return reports
