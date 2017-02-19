@@ -4,6 +4,7 @@ from internal_displacement.article import Article
 import os
 import datetime
 import pandas as pd
+
 class TestSQLArticleInterface(TestCase):
 
     def setUp(self):
