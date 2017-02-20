@@ -78,6 +78,35 @@ These are the main parts and functions that make up the project.
  * A non-technical-user friendly front end to wrap around the components above for inputting URLs, managing the databases, verifying data and interacting with visualisations
  * Automation of scraping, pipeline and interpreter
 
+### Running in Docker
+
+You can run everything as you're accustomed to by installing dependencies locally, but
+another option is to run in a Docker container. That way, all of the dependencies will
+be installed in a controlled, reproducible way.
+
+1. Install Docker: https://www.docker.com/products/overview
+2. Build the docker container (unfortunately, this will take a while):
+
+```
+docker build -t internal-displacement .
+```
+
+    
+3. Run the container. By default, this starts a jupyter notebook server:
+
+```
+docker run -it --rm -p 8888:8888 -v $PWD:/project internal-displacement
+```
+
+Change the first 8888 to another port, if you're already running something there.
+    
+4. You can also run the unit tests with:
+
+```
+docker run --rm internal-displacement nosetests
+```
+
+
 ### Progress
 
 The flow chart below shows the main project aims and their level of completion:
