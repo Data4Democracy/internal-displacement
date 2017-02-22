@@ -27,8 +27,8 @@ class TestSQLArticleInterface(TestCase):
         self.assertEqual(db_url,"www.butts.com/disasters")
         db_authors = article_from_db[2]
         self.assertEqual(db_authors,"test_author_1,test_author_2")
-        db_datetime = article_from_db[3]
-        self.assertEqual(db_datetime,test_article_date_string)
+        db_publish_date = article_from_db[3]
+        self.assertEqual(db_publish_date,test_article_date_string)
         db_domain = article_from_db[4]
         self.assertEqual(db_domain,"www.butts.com")
         db_text = article_from_db[5]
@@ -57,7 +57,7 @@ class TestSQLArticleInterface(TestCase):
         self.pipeline.insert_article(test_article)
         self.pipeline.to_csv("Articles","testing_csv.csv")
         test_csv_df = pd.read_csv("testing_csv.csv")
-        columns = ["title" , "url" ,"author" ,"datetime" ,"domain" ,
+        columns = ["title" , "url" ,"author" ,"publish_date" ,"domain" ,
                 "content" , "content_type" , "language"]
         self.assertEqual(list(test_csv_df.columns),columns)
         csv_first_row_values = list(test_csv_df.values[0])

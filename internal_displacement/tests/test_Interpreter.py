@@ -1,16 +1,36 @@
 from unittest import TestCase
-from internal_displacement.interpreter import *
+from internal_displacement.interpreter import strip_words, Interpreter
 from internal_displacement.article import Article
 from langdetect import detect
 import pycountry
 import spacy
 import datetime
 
+nlp = spacy.load("en")
+person_reporting_terms = [
+            'displaced', 'evacuated', 'forced', 'flee', 'homeless', 'relief camp',
+            'sheltered', 'relocated', 'stranded', 'stuck', 'stranded', "killed", "dead", "died", "drown"
+        ]
 
+structure_reporting_terms = [
+            'destroyed', 'damaged', 'swept', 'collapsed',
+            'flooded', 'washed', 'inundated', 'evacuate'
+]
+
+person_reporting_units = ["families", "person", "people", "individuals", "locals", "villagers", "residents",
+                            "occupants", "citizens", "households"]
+
+structure_reporting_units = ["home", "house", "hut", "dwelling", "building", "shop", "business", "apartment",
+                                     "flat", "residence"]
+
+relevant_article_terms = ['Rainstorm', 'hurricane', 'tornado', 'rain', 'storm', 'earthquake']
+relevant_article_lemmas = [t.lemma_ for t in nlp(" ".join(relevant_article_terms))]
 class TestInterpreter(TestCase):
 
+
     def setUp(self):
-        self.pipeline = Interpreter(data_path='data')
+
+        self.interpreter = Interpreter(nlp,person_reporting_terms,structure_reporting_terms,person_reporting_units,structure_reporting_units,relevant_article_lemmas)
         self.date = datetime.datetime.now()
 
     def tearDown(self):
@@ -20,7 +40,7 @@ class TestInterpreter(TestCase):
         test_article = Article("A decent amount of test content which will be used for extracting the language", \
                                 self.date, "test_title", "test_content_type", [
                                "test_author_1", "test_author_2"], "www.butts.com", "www.butts.com/disasters")
-        self.pipeline.check_language(test_article)
+        self.interpreter.check_language(test_article)
         article_language = test_article.language
         self.assertEqual(article_language, "en")
 
@@ -34,7 +54,7 @@ class TestInterpreter(TestCase):
         test_article = Article("The United Kingdom plus Afghanistan plus Sichuan Province, as well as Toronto, Cuba and Bosnia", \
                                 self.date, "test_title", "test_content_type", [
                                "test_author_1", "test_author_2"], "www.butts.com", "www.butts.com/disasters")
-        countries = self.pipeline.extract_countries(test_article)
+        countries = self.interpreter.extract_countries(test_article)
         self.assertIsInstance(countries, list)
         self.assertEqual(len(countries), 6)
         self.assertIn('GB', countries)
@@ -46,6 +66,6 @@ class TestInterpreter(TestCase):
         test_article = Article("No countries mentioned", \
                                 self.date, "test_title", "test_content_type", [
                                "test_author_1", "test_author_2"], "www.butts.com", "www.butts.com/disasters")
-        countries = self.pipeline.extract_countries(test_article)
+        countries = self.interpreter.extract_countries(test_article)
         self.assertIsInstance(countries, list)
         self.assertEqual(len(countries), 0)
