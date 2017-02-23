@@ -3,7 +3,6 @@ import pycountry
 import json
 import spacy
 import os
-from langdetect import detect
 import textacy
 from internal_displacement.report import Report
 
@@ -90,7 +89,10 @@ class Interpreter():
         '''Identify the language of the article content
         and update the article property 'language'
         '''
-        language = detect(article.content)
+        try:
+            language = textacy.text_utils.detect_language(article.content)
+        except ValueError:
+            language = 'na'
         article.language = language
 
     def check_relevance(self, article):
