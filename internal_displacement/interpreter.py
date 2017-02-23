@@ -399,6 +399,10 @@ class Interpreter():
                     return self.person_unit_lemmas, verb.lemma_ + " " + verb_object.text
                 elif verb_object.lemma_ in self.structure_term_lemmas:
                     return self.structure_unit_lemmas, verb.lemma_ + " " + verb_object.text
+        elif verb.lemma_ == 'claim':
+            dobjects = [v.text for v in textacy.spacy_utils.get_objects_of_verb(verb)]
+            if 'lives' in dobjects:
+                return self.person_unit_lemmas, verb.lemma_ + " " + "lives"
 
         return None, None
 
