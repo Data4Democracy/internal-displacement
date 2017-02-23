@@ -7,6 +7,7 @@ from langdetect import detect
 import textacy
 from internal_displacement.report import Report
 
+
 def strip_words(place_name):
     '''Strip out common words that often appear in extracted entities
     '''
@@ -67,9 +68,9 @@ def match_country_name(place_name):
                 break
 
 
-
 class Interpreter():
-    def __init__(self,nlp,person_reporting_terms,structure_reporting_terms,person_reporting_units,structure_reporting_units,relevant_article_lemmas, data_path='../../data'):
+
+    def __init__(self, nlp, person_reporting_terms, structure_reporting_terms, person_reporting_units, structure_reporting_units, relevant_article_lemmas, data_path='../data'):
         self.nlp = nlp
         with open(os.path.join(data_path, 'cities_to_countries.json'), "r") as f:
             self.cities_to_countries = json.load(f)
@@ -136,19 +137,19 @@ class Interpreter():
 
         return list(countries)
 
-    def test_token_equality(self,token_a, token_b):
+    def test_token_equality(self, token_a, token_b):
         if token_a.i == token_b.i:
             return True
         else:
             return False
 
-    def check_if_collection_contains_token(self,token, collection):
+    def check_if_collection_contains_token(self, token, collection):
         for c in collection:
             if self.test_token_equality(token, c):
                 return True
         return False
 
-    def get_descendents(self,sentence, root=None):
+    def get_descendents(self, sentence, root=None):
         """
         Retrieves all tokens that are descended from the specified root token.
         param: root: the root token
@@ -159,8 +160,7 @@ class Interpreter():
             root = sentence.root
         return [t for t in sentence if root.is_ancestor_of(t)]
 
-
-    def check_if_entity_contains_token(self,tokens, entity):
+    def check_if_entity_contains_token(self, tokens, entity):
         """
         Function to test if a given entity contains at least one of a list of tokens.
         param: tokens: A list of tokens
@@ -175,7 +175,7 @@ class Interpreter():
                 return True
         return False
 
-    def get_distance_from_root(self,token, root):
+    def get_distance_from_root(self, token, root):
         """
         Gets the parse tree distance between a token and the sentence root.
         :param token: a token
@@ -192,14 +192,14 @@ class Interpreter():
             p = p.head
         return d
 
-    def get_common_ancestors(self,tokens):
+    def get_common_ancestors(self, tokens):
         ancestors = [set(t.ancestors) for t in tokens]
         if len(ancestors) == 0:
             return []
         common_ancestors = ancestors[0].intersection(*ancestors)
         return common_ancestors
 
-    def get_distance_between_tokens(self,token_a, token_b):
+    def get_distance_between_tokens(self, token_a, token_b):
 
         if token_b in token_a.subtree:
             distance = self.get_distance_from_root(token_b, token_a)
@@ -217,8 +217,10 @@ class Interpreter():
         return distance
 
     def get_closest_contiguous_location_block(self, entity_list, root_node):
-        location_entity_tokens = [[token for token in sentence] for sentence in entity_list]
-        token_list = [item for sublist in location_entity_tokens for item in sublist]
+        location_entity_tokens = [[token for token in sentence]
+                                  for sentence in entity_list]
+        token_list = [
+            item for sublist in location_entity_tokens for item in sublist]
         location_tokens_by_distance = sorted([(token, self.get_distance_between_tokens(token, root_node))
                                               for token in token_list], key=lambda x: x[1])
         closest_location = location_tokens_by_distance[0]
@@ -227,9 +229,11 @@ class Interpreter():
         while added_tokens > 0:
             contiguous_block_ancestors = [[token for token in token_list if token.is_ancestor_of(toke)] for toke in
                                           contiguous_block]
-            contiguous_block_subtrees = [token.subtree for token in contiguous_block]
+            contiguous_block_subtrees = [
+                token.subtree for token in contiguous_block]
             contiguous_block_neighbours = contiguous_block_ancestors + contiguous_block_subtrees
-            contiguous_block_neighbours = [item for sublist in contiguous_block_neighbours for item in sublist]
+            contiguous_block_neighbours = [
+                item for sublist in contiguous_block_neighbours for item in sublist]
             added_tokens = 0
             for toke in token_list:
                 if not self.check_if_collection_contains_token(toke, contiguous_block):
@@ -238,7 +242,7 @@ class Interpreter():
                         contiguous_block.append(toke)
         return contiguous_block
 
-    def get_contiguous_tokens(self,token_list):
+    def get_contiguous_tokens(self, token_list):
         common_ancestor_tokens = self.get_common_ancestors(token_list)
         highest_contiguous_block = []
         for toke in token_list:
@@ -254,9 +258,10 @@ class Interpreter():
                         added_tokens += 1
         return highest_contiguous_block
 
-    def match_entities_in_block(self,entities, token_block):
+    def match_entities_in_block(self, entities, token_block):
         matched = []
-        text_block = [t.text for t in token_block]  # For some reason comparing identity on tokens does not always work.
+        # For some reason comparing identity on tokens does not always work.
+        text_block = [t.text for t in token_block]
         for e in entities:
             et = [t.text for t in e]
             et_in_b = [t for t in et if t in text_block]
@@ -264,7 +269,7 @@ class Interpreter():
                 matched.append(e)
         return matched
 
-    def extract_locations(self,sentence, root=None):
+    def extract_locations(self, sentence, root=None):
         """
         Examines a sentence and identifies if any of its constituent tokens describe a location.
         If a root token is specified, only location tokens below the level of this token in the tree will be examined.
@@ -277,15 +282,19 @@ class Interpreter():
         if not root:
             root = sentence.root
         descendents = self.get_descendents(sentence, root)
-        location_entities = [e for e in self.nlp(sentence.text).ents if e.label_ == "GPE"]
+        location_entities = [e for e in self.nlp(
+            sentence.text).ents if e.label_ == "GPE"]
         if len(location_entities) > 0:
             descendent_location_tokens = []
             for location_ent in location_entities:
                 if self.check_if_entity_contains_token(location_ent, descendents):
-                    descendent_location_tokens.extend([token for token in location_ent])
-            contiguous_token_block = self.get_contiguous_tokens(descendent_location_tokens)
+                    descendent_location_tokens.extend(
+                        [token for token in location_ent])
+            contiguous_token_block = self.get_contiguous_tokens(
+                descendent_location_tokens)
 
-            block_locations = self.match_entities_in_block(location_entities, contiguous_token_block)
+            block_locations = self.match_entities_in_block(
+                location_entities, contiguous_token_block)
             if len(block_locations) > 0:
                 return [location.text for location in block_locations]
             else:
@@ -294,7 +303,7 @@ class Interpreter():
         else:
             return []
 
-    def extract_dates(self,sentence, root=None):
+    def extract_dates(self, sentence, root=None):
         """
         Examines a sentence and identifies if any of its constituent tokens describe a date.
         If a root token is specified, only date tokens below the level of this token in the tree will be examined.
@@ -310,20 +319,24 @@ class Interpreter():
         if not root:
             root = sentence.root
         descendents = self.get_descendents(sentence, root.head)
-        date_entities = [e for e in self.nlp(sentence.text).ents if e.label_ == "DATE"]
+        date_entities = [e for e in self.nlp(
+            sentence.text).ents if e.label_ == "DATE"]
         if len(date_entities) > 0:
             descendent_date_tokens = []
             for date_ent in date_entities:
                 if self.check_if_entity_contains_token(date_ent, descendents):
-                    descendent_date_tokens.extend([token for token in date_ent])
-            contiguous_token_block = self.get_contiguous_tokens(descendent_date_tokens)
+                    descendent_date_tokens.extend(
+                        [token for token in date_ent])
+            contiguous_token_block = self.get_contiguous_tokens(
+                descendent_date_tokens)
 
-            block_dates = self.match_entities_in_block(date_entities, contiguous_token_block)
+            block_dates = self.match_entities_in_block(
+                date_entities, contiguous_token_block)
             return block_dates
         else:
             return None
 
-    def basic_number(self,token):
+    def basic_number(self, token):
         if token.text in ("dozens", "hundreds", "thousands"):
             return True
         if token.like_num:
@@ -331,7 +344,7 @@ class Interpreter():
         else:
             return False
 
-    def process_sentence_new(self,sentence, dates_memory, locations_memory, story):
+    def process_sentence_new(self, sentence, dates_memory, locations_memory, story):
         """
         Extracts the main verbs from a sentence as a starting point
         for report extraction.
@@ -343,16 +356,16 @@ class Interpreter():
             unit_type, verb_lemma = self.verb_relevance(v, story)
             if unit_type:
                 reports = self.branch_search_new(v, verb_lemma, unit_type, dates_memory, locations_memory, sentence,
-                                            story)
+                                                 story)
                 sentence_reports.extend(reports)
         return sentence_reports
 
-    def article_relevance(self,article):
+    def article_relevance(self, article):
         for token in article:
             if token.lemma_ in self.relevant_article_lemmas:
                 return True
 
-    def verb_relevance(self,verb, article):
+    def verb_relevance(self, verb, article):
         """
         Checks a verb for relevance by:
         1. Comparing to structure term lemmas
@@ -387,7 +400,7 @@ class Interpreter():
 
         return None, None
 
-    def get_quantity_from_phrase(self,phrase):
+    def get_quantity_from_phrase(self, phrase):
         """
         Look for number-like tokens within noun phrase.
         """
@@ -395,7 +408,7 @@ class Interpreter():
             if self.basic_number(token):
                 return token
 
-    def get_quantity(self,sentence, unit):
+    def get_quantity(self, sentence, unit):
         """
         Split a sentence into noun phrases.
         Search for quantities within each noun phrase.
@@ -415,21 +428,22 @@ class Interpreter():
             if self.basic_number(child):
                 return child
 
-    def simple_subjects_and_objects(self,verb):
+    def simple_subjects_and_objects(self, verb):
         verb_objects = textacy.spacy_utils.get_objects_of_verb(verb)
         verb_subjects = textacy.spacy_utils.get_subjects_of_verb(verb)
         verb_objects.extend(verb_subjects)
         return verb_objects
 
-    def nouns_from_relative_clause(self,sentence, verb):
-        possible_clauses = list(textacy.extract.pos_regex_matches(sentence, r'<NOUN>+<VERB>'))
+    def nouns_from_relative_clause(self, sentence, verb):
+        possible_clauses = list(
+            textacy.extract.pos_regex_matches(sentence, r'<NOUN>+<VERB>'))
         for clause in possible_clauses:
             if verb in clause:
                 for token in clause:
                     if token.tag_ == 'NNS':
                         return token
 
-    def get_subjects_and_objects(self,story, sentence, verb):
+    def get_subjects_and_objects(self, story, sentence, verb):
         """
         Identify subjects and objects for a verb
         Also check if a reporting unit directly precedes
@@ -471,13 +485,14 @@ class Interpreter():
 
         return list(set(verb_objects))
 
-    def test_noun_conj(self,sentence, noun):
-        possible_conjs = list(textacy.extract.pos_regex_matches(sentence, r'<NOUN><CONJ><NOUN>'))
+    def test_noun_conj(self, sentence, noun):
+        possible_conjs = list(textacy.extract.pos_regex_matches(
+            sentence, r'<NOUN><CONJ><NOUN>'))
         for conj in possible_conjs:
             if noun in conj:
                 return conj
 
-    def branch_search_new(self,verb, verb_lemma, search_type, dates_memory, locations_memory, sentence, story):
+    def branch_search_new(self, verb, verb_lemma, search_type, dates_memory, locations_memory, sentence, story):
         """
         Extract reports based upon an identified verb (reporting term).
         Extract possible locations or use most recent locations
@@ -486,7 +501,7 @@ class Interpreter():
         Identify quantity by looking in noun phrases.
         """
         possible_locations = self.extract_locations(sentence, verb)
-        possible_dates = self.extract_dates(sentence,verb)
+        possible_dates = self.extract_dates(sentence, verb)
         if not possible_locations:
             possible_locations = locations_memory
         if not possible_dates:
@@ -497,8 +512,10 @@ class Interpreter():
         # If there are multiple possible nouns and it is unclear which is the correct one
         # choose the one with the fewest descendents. A verb object with many descendents is more likely to
         # have its own verb as a descendent.
-        verb_descendent_counts = [(v, len(list(v.subtree))) for v in verb_objects]
-        verb_objects = [x[0] for x in sorted(verb_descendent_counts, key=lambda x: x[1])]
+        verb_descendent_counts = [(v, len(list(v.subtree)))
+                                  for v in verb_objects]
+        verb_objects = [x[0] for x in sorted(
+            verb_descendent_counts, key=lambda x: x[1])]
         for o in verb_objects:
             if self.basic_number(o) and o.i == (verb.i - 1):
                 quantity = o
@@ -525,7 +542,7 @@ class Interpreter():
                 break
         return reports
 
-    def cleanup(self,text):
+    def cleanup(self, text):
         text = re.sub(r'([a-zA-Z0-9])(IMPACT)', r'\1. \2', text)
         text = re.sub(r'([a-zA-Z0-9])(RESPONSE)', r'\1. \2', text)
         text = re.sub(r'(IMPACT)([a-zA-Z0-9])', r'\1. \2', text)
@@ -533,7 +550,7 @@ class Interpreter():
         text = re.sub(r'([a-zA-Z])(\d)', r'\1. \2', text)
         return text
 
-    def process_article_new(self,story):
+    def process_article_new(self, story):
         """
         Process a story once sentence at a time
         """
@@ -542,10 +559,12 @@ class Interpreter():
         story = self.nlp(story)
         sentences = list(story.sents)  # Split into sentences
         dates_memory = None  # Keep a running track of the most recent dates found in articles
-        locations_memory = None  # Keep a running track of the most recent locations found in articles
+        # Keep a running track of the most recent locations found in articles
+        locations_memory = None
         for sentence in sentences:  # Process sentence
             reports = []
-            reports = self.process_sentence_new(sentence, dates_memory, locations_memory, story)
+            reports = self.process_sentence_new(
+                sentence, dates_memory, locations_memory, story)
             current_locations = self.extract_locations(sentence)
             if current_locations:
                 locations_memory = current_locations
