@@ -418,7 +418,8 @@ class Interpreter():
         search for quantity within preceding noun phrase
         """
         noun_phrases = list(self.nlp(sentence.text).noun_chunks)
-        # Case one - see if phrase contains the unit
+        # Case one - if the unit is a conjugated noun phrase,
+        # look for numeric tokens descending from the root of the phrase.
         for i, np in enumerate(noun_phrases):
             if self.check_if_collection_contains_token(unit, np):
                 if unit.dep_ == 'conj':
