@@ -68,8 +68,8 @@ def match_country_name(place_name):
 
 
 class Interpreter():
-
-    def __init__(self, nlp, person_reporting_terms, structure_reporting_terms, person_reporting_units, structure_reporting_units, relevant_article_lemmas, data_path='../data'):
+    def __init__(self, nlp, person_reporting_terms, structure_reporting_terms, person_reporting_units,
+                 structure_reporting_units, relevant_article_lemmas, data_path='../data'):
         self.nlp = nlp
         with open(os.path.join(data_path, 'cities_to_countries.json'), "r") as f:
             self.cities_to_countries = json.load(f)
@@ -339,7 +339,7 @@ class Interpreter():
             return None
 
     def basic_number(self, token):
-        if token.text in ("dozens", "hundreds", "thousands"):
+        if token.text in ("dozens", "hundreds", "thousands", "fifty"):
             return True
         if token.like_num:
             return True
@@ -502,6 +502,7 @@ class Interpreter():
         Identify reporting unit by looking in objects and subjects of reporting term (verb)
         Identify quantity by looking in noun phrases.
         """
+
         possible_locations = self.extract_locations(sentence, verb)
         possible_dates = self.extract_dates(sentence, verb)
         if not possible_locations:
@@ -535,8 +536,11 @@ class Interpreter():
                 noun_conj = self.test_noun_conj(sentence, o)
                 if noun_conj:
                     reporting_unit = noun_conj
-                # Try and get a number
-                quantity = self.get_quantity(sentence, o)
+                    # Try and get a number - begin search from noun conjunction root.
+                    quantity = self.get_quantity(sentence, reporting_unit.root)
+                else:
+                    # Try and get a number - begin search from noun.
+                    quantity = self.get_quantity(sentence, o)
                 report = Report(possible_locations, possible_dates, verb_lemma,
                                 reporting_unit, quantity, story.text)
                 reports.append(report)

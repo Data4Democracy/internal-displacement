@@ -32,7 +32,7 @@ relevant_article_lemmas = [t.lemma_ for t in nlp(
 
 
 interpreter = Interpreter(nlp, person_reporting_terms, structure_reporting_terms, person_reporting_units,
-                          structure_reporting_units, relevant_article_lemmas, 'data/')
+                          structure_reporting_units, relevant_article_lemmas, data_path='../../data')
 
 
 def test_fact_extraction(article, expected_reports):
@@ -93,7 +93,7 @@ expected_reports.append(
 expected_reports.append(Report(['Khost', 'Nangarhar'], [
                         'this year'], 'die', 'people', 24, ''))
 expected_reports.append(Report(['Khost', 'Nangarhar'], [
-                        'this year'], 'destroy', 'homes and shops', 50, ''))
+                        'this year'], 'destroy', 'homes and shops', "fifty", ''))
 expected_reports.append(
     Report(['Pakistan'], ['this year'], 'die', 'people', 80, ''))
 expected_reports.append(
