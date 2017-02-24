@@ -118,8 +118,8 @@ outcomes.append(test_outcome)
 
 article = "BEIJING, March 31 (Xinhua) -- The Ministry of Civil Affairs has sent 1,000 tents, 2,000 sleeping bags, 2,000 folding beds and 1,000 sets of folding desks and chairs to Jianhe County in southwestern Guizhou Province after it was hit by a 5.5-magnitude earthquake on Monday morning.  No deaths have been reported, though the quake was Guizhou's biggest in terms of magnitude since 1949. More than 23,000 people have been affected and 2,536 relocated.  Provincial authorities have sent teams to help with the rescue work and allocated 1 million yuan (about 162,880 U.S. dollars) and 206 tents for disaster relief."
 expected_reports = []
-expected_reports.append(Report(['Guizhou'], ['Monday morning'], 'relocate', 'person', '2,536', ''))
-expected_reports.append(Report(['Guizhou'], ['Monday morning'], 'affect', 'people', '23,000', ''))
+expected_reports.append(Report(['Guizhou'], ['Monday'], 'relocate', 'person', '2,536', ''))
+expected_reports.append(Report(['Guizhou'], ['Monday'], 'affect', 'people', '23,000', ''))
 test_outcome = test_fact_extraction(article, expected_reports)
 outcomes.append(test_outcome)
 

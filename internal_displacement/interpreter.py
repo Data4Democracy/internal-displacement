@@ -307,7 +307,7 @@ class Interpreter():
         else:
             return []
 
-    def extract_dates(self, sentence, root=None):
+    def extract_dates(self, sentence, story, root=None):
         """
         Examines a sentence and identifies if any of its constituent tokens describe a date.
         If a root token is specified, only date tokens below the level of this token in the tree will be examined.
@@ -336,11 +336,37 @@ class Interpreter():
 
             block_dates = self.match_entities_in_block(
                 date_entities, contiguous_token_block)
-            return block_dates
+            
+            likely_block_dates = self.date_likelihood(block_dates, story)
+            if likely_block_dates:
+                return likely_block_dates
         elif len(date_entities) == 1:
-            return date_entities
+            likely_dates = self.date_likelihood(date_entities, story)
+            if likely_dates:
+                return likely_dates
         else:
             return None
+
+    def date_likelihood(self, possible_dates, story):
+        likely_dates = possible_dates.copy()
+        # One rule could look at the year of the date
+        # i.e. if the year is x years ago, then not likely
+        for date_token in likely_dates:
+            if re.search(r'(\s|^)(\d{4})([\s\.,;:]|$)', date_token.text):
+                year = int(re.search(r'(\s|^)(\d{4})([\s\.,;:]|$)', date_token.text).groups()[1])
+                if year < 2016:
+                    likely_dates.remove(date_token)
+        
+        # One rule could look at the word preceding the date
+        # i.e. since last year, next Tuesday
+        for date_token in likely_dates:
+            if date_token[0].i > 0:
+                previous_word = story[date_token[0].i - 1]
+                if previous_word.text in ('since', 'next'):
+                    likely_dates.remove(date_token)
+        
+        if len(likely_dates) > 0:
+            return likely_dates
 
     def basic_number(self, token):
         if token.text in ("dozens", "hundreds", "thousands", "fifty"):
@@ -519,7 +545,7 @@ class Interpreter():
         Identify quantity by looking in noun phrases.
         """
         possible_locations = self.extract_locations(sentence, verb)
-        possible_dates = self.extract_dates(sentence, verb)
+        possible_dates = self.extract_dates(sentence, story, verb)
         if not possible_locations:
             possible_locations = locations_memory
         if not possible_dates:
@@ -593,7 +619,7 @@ class Interpreter():
             current_locations = self.extract_locations(sentence)
             if current_locations:
                 locations_memory = current_locations
-            current_dates = self.extract_dates(sentence)
+            current_dates = self.extract_dates(sentence, story)
             if current_dates:
                 dates_memory = current_dates
             processed_reports.extend(reports)
