@@ -286,7 +286,7 @@ class Interpreter():
         descendents = self.get_descendents(sentence, root)
         location_entities = [e for e in self.nlp(
             sentence.text).ents if e.label_ == "GPE"]
-        if len(location_entities) > 0:
+        if len(location_entities) > 1:
             descendent_location_tokens = []
             for location_ent in location_entities:
                 if self.check_if_entity_contains_token(location_ent, descendents):
@@ -302,6 +302,8 @@ class Interpreter():
             else:
                 return location_entities  # If we cannot decide which one is correct, choose them all
                 # and figure it out at the report merging stage.
+        elif len(location_entities) == 1:
+            return location_entities
         else:
             return []
 
@@ -323,7 +325,7 @@ class Interpreter():
         descendents = self.get_descendents(sentence, root.head)
         date_entities = [e for e in self.nlp(
             sentence.text).ents if e.label_ == "DATE"]
-        if len(date_entities) > 0:
+        if len(date_entities) > 1:
             descendent_date_tokens = []
             for date_ent in date_entities:
                 if self.check_if_entity_contains_token(date_ent, descendents):
@@ -335,6 +337,8 @@ class Interpreter():
             block_dates = self.match_entities_in_block(
                 date_entities, contiguous_token_block)
             return block_dates
+        elif len(date_entities) == 1:
+            return date_entities
         else:
             return None
 
@@ -514,7 +518,6 @@ class Interpreter():
         Identify reporting unit by looking in objects and subjects of reporting term (verb)
         Identify quantity by looking in noun phrases.
         """
-
         possible_locations = self.extract_locations(sentence, verb)
         possible_dates = self.extract_dates(sentence, verb)
         if not possible_locations:

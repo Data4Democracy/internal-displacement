@@ -32,7 +32,7 @@ relevant_article_lemmas = [t.lemma_ for t in nlp(
 
 
 interpreter = Interpreter(nlp, person_reporting_terms, structure_reporting_terms, person_reporting_units,
-                          structure_reporting_units, relevant_article_lemmas, data_path='../../data')
+                          structure_reporting_units, relevant_article_lemmas, data_path='data')
 
 
 def test_fact_extraction(article, expected_reports):
@@ -58,7 +58,7 @@ def test_fact_extraction(article, expected_reports):
         for er in expected_reports:
             er.display()
     else:
-        print("Article facts correctly extracted.")
+        print("ARTICLE FACTS CORRECTLY EXTRACTED.")
     return outcome
 
 
@@ -102,18 +102,34 @@ expected_reports.append(
 test_outcome = test_fact_extraction(article, expected_reports)
 outcomes.append(test_outcome)
 
-article = "Further severe weather, floods and landslides have left 14 people dead and 4 missing in southern China.  Yesterday the Chinese government said that the storms and heavy rainfall from 18 to 22 June 2014 affected nine southern provinces. 8,700 homes have been destroyed, 66,000 homes damaged and forced 337,000 people to evacuate. 42,000 hectares of crops have also been destroyed. Further heavy rainfall is forecast for the next 24 hours."
-expected_reports = []
-expected_reports.append(Report(['China'], [], 'leave dead', 'people', 14, ''))
-expected_reports.append(
-    Report(['China'], ['18 June 2014'], 'destroy', 'home', '8,700', ''))
-expected_reports.append(
-    Report(['China'], ['18 June 2014'], 'damage', 'home', '66,000', ''))
-expected_reports.append(
-    Report(['China'], ['18 June 2014'], 'force', 'people', '337,000', ''))
 
+article = "It was early Saturday when a flash flood hit the area and washed away more than 500 houses"
+expected_reports = []
+expected_reports.append(Report([],['early Saturday'], 'wash', 'house', 500, ''))
 test_outcome = test_fact_extraction(article, expected_reports)
 outcomes.append(test_outcome)
+
+
+article = "Within hours of the storm, Dowdall had declared a state of emergency and brought in Essa Township emergency departments staff, as well Simcoe County administrators, to assist the 300 people displaced by the storm."
+expected_reports = []
+expected_reports.append(Report(['Essa Township', 'Simcoe County'], [], 'displace', 'people', 300, ''))
+test_outcome = test_fact_extraction(article, expected_reports)
+outcomes.append(test_outcome)
+
+article = "BEIJING, March 31 (Xinhua) -- The Ministry of Civil Affairs has sent 1,000 tents, 2,000 sleeping bags, 2,000 folding beds and 1,000 sets of folding desks and chairs to Jianhe County in southwestern Guizhou Province after it was hit by a 5.5-magnitude earthquake on Monday morning.  No deaths have been reported, though the quake was Guizhou's biggest in terms of magnitude since 1949. More than 23,000 people have been affected and 2,536 relocated.  Provincial authorities have sent teams to help with the rescue work and allocated 1 million yuan (about 162,880 U.S. dollars) and 206 tents for disaster relief."
+expected_reports = []
+expected_reports.append(Report(['Guizhou'], ['Monday morning'], 'relocate', 'person', '2,536', ''))
+expected_reports.append(Report(['Guizhou'], ['Monday morning'], 'affect', 'people', '23,000', ''))
+test_outcome = test_fact_extraction(article, expected_reports)
+outcomes.append(test_outcome)
+
+article = 'As many as 2,214 households have been affected by the rainstorms in Rio Grande do Sul, the Emergency Management Service reported today (Dec. 28). A total of 1,964 households were displaced. The storms hit forty municipalities.  According to the government of Rio Grande do Sul, the State Coordination for Emergency Management continues to monitor and provide assistance to the impacted municipalities and communities.  Last Saturday (26), President Rousseff flew over the region, which borders Argentina and Uruguay, and announced the provision of $6.6 million to help communities hit by the floods.  This has been the fifth flood this year in the state, and the most severe. The Quaraí river rose a record 15.28 meters. The situation got even worse with the rise of the Uruguay river.  The rainstorm has disrupted rice harvest in the municipality of Quaraí and caused the Quaraí-Artigas international bridge between Brazil and Uruguay to remain closed off for 22 hours.    Translated by Mayra Borges'
+expected_reports = []
+expected_reports.append(Report(['Rio Grande do Sul'], ['Dec. 28'], 'displace', 'household', '1,964', ''))
+expected_reports.append(Report(['Rio Grande do Sul'], ['Dec. 28'], 'affect', 'household', '2,214', ''))
+test_outcome = test_fact_extraction(article, expected_reports)
+outcomes.append(test_outcome)
+
 
 test_results = "".join([outcome_map[o] for o in outcomes])
 print("\n")
