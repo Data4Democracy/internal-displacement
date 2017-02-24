@@ -20,7 +20,7 @@ structure_reporting_terms = [
 ]
 
 person_reporting_units = ["families", "person", "people", "individuals", "locals", "villagers", "residents",
-                          "occupants", "citizens", "households"]
+                            "occupants", "citizens", "households", "life"]
 
 structure_reporting_units = ["home", "house", "hut", "dwelling", "building", "shop", "business", "apartment",
                                      "flat", "residence"]
@@ -79,7 +79,7 @@ outcomes.append(test_outcome)
 article = "Flash flooding across Afghanistan and Pakistan has left more than 160 dead and dozens stranded in one of South Asia's worst natural disasters this year, say officials.  The flooding, caused by unusually heavy rain, has left villagers stuck in remote areas without shelter, food or power.  Mountainous Afghanistan was the worst hit, with 61 people killed and approximately 500 traditional mud-brick homes washed away in more than a dozen villages in Sarobi, a rural district less than an hour from Kabul, officials said.  Floods left a village devastated in the remote eastern Afghan province of Nuristan. At least 60 homes were destroyed across three districts, said provincial spokesman Mohammad Yusufi. No one was killed.  Authorities have been unable to deliver aid to some badly affected villages by land as roads in the area are controlled by the Taliban, Yusufi added.  “We have asked the national government for help as have an overwhelming number of locals asking for assistance, but this is a Taliban-ridden area,” Yusufi said.  At least 24 people were also died in two other eastern border provinces, Khost and Nangarhar, according to local officials. More than fifty homes and shops were destroyed and thousands of acres of farmland flooded.  In Pakistan monsoon rains claimed more than 80 lives, local media reported. Houses collapsing, drowning and electrocution all pushed up the death toll, said Sindh Information Minister Sharjeel Inam Memon.  In Karachi, the commercial capital and a southern port city that is home to 18 million people, poor neighborhoods were submerged waist-deep in water and many precincts suffered long power outages. Deaths were also reported in the north and west of the country.  Additional reporting by Reuters"
 expected_reports = []
 expected_reports.append(Report(['Afghanistan', 'Pakistan'], [
-                        'this year'], 'die', 'person', 160, ''))
+                        'this year'], 'leave dead', 'person', 160, ''))
 expected_reports.append(Report(['Afghanistan', 'Pakistan'], [
                         'this year'], 'strand', 'person', 'dozens', ''))
 expected_reports.append(Report(['Afghanistan', 'Pakistan'], [
@@ -95,7 +95,7 @@ expected_reports.append(Report(['Khost', 'Nangarhar'], [
 expected_reports.append(Report(['Khost', 'Nangarhar'], [
                         'this year'], 'destroy', 'homes and shops', "fifty", ''))
 expected_reports.append(
-    Report(['Pakistan'], ['this year'], 'die', 'people', 80, ''))
+    Report(['Pakistan'], ['this year'], 'claim lives', 'life', 80, ''))
 expected_reports.append(
     Report(['Pakistan'], ['this year'], 'collapse', 'house', None, ''))
 

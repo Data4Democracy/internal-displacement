@@ -399,6 +399,10 @@ class Interpreter():
                     return self.person_unit_lemmas, verb.lemma_ + " " + verb_object.text
                 elif verb_object.lemma_ in self.structure_term_lemmas:
                     return self.structure_unit_lemmas, verb.lemma_ + " " + verb_object.text
+        elif verb.lemma_ == 'claim':
+            dobjects = [v.text for v in textacy.spacy_utils.get_objects_of_verb(verb)]
+            if 'lives' in dobjects:
+                return self.person_unit_lemmas, verb.lemma_ + " " + "lives"
 
         return None, None
 
@@ -495,6 +499,13 @@ class Interpreter():
             if noun in conj:
                 return conj
 
+    def next_word(self, story, token):
+        if token.i == len(story):
+            return None
+        else:
+            return story[token.i + 1]
+
+
     def branch_search_new(self, verb, verb_lemma, search_type, dates_memory, locations_memory, sentence, story):
         """
         Extract reports based upon an identified verb (reporting term).
@@ -521,17 +532,21 @@ class Interpreter():
         verb_objects = [x[0] for x in sorted(
             verb_descendent_counts, key=lambda x: x[1])]
         for o in verb_objects:
-            if self.basic_number(o) and o.i == (verb.i - 1):
-                quantity = o
-                if search_type == self.structure_term_lemmas:
-                    unit = 'house'
-                else:
-                    unit = 'person'
-                report = Report(possible_locations, possible_dates, verb_lemma,
-                                unit, quantity, story.text)
-                # report.display()
-                reports.append(report)
-                break
+            if self.basic_number(o):
+                # Test if the following word is either the verb in question
+                # Or if it is of the construction 'leave ____', then ____ is the following word
+                next_word = self.next_word(story, o)
+                if next_word and next_word.i == verb.i or next_word.text == verb_lemma.split(" ")[-1]:
+                    quantity = o
+                    if search_type == self.structure_term_lemmas:
+                        unit = 'house'
+                    else:
+                        unit = 'person'
+                    report = Report(possible_locations, possible_dates, verb_lemma,
+                                    unit, quantity, story.text)
+                    # report.display()
+                    reports.append(report)
+                    break
             elif o.lemma_ in search_type:
                 reporting_unit = o.lemma_
                 noun_conj = self.test_noun_conj(sentence, o)
