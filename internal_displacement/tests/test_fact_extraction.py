@@ -125,8 +125,8 @@ outcomes.append(test_outcome)
 
 article = 'As many as 2,214 households have been affected by the rainstorms in Rio Grande do Sul, the Emergency Management Service reported today (Dec. 28). A total of 1,964 households were displaced. The storms hit forty municipalities.  According to the government of Rio Grande do Sul, the State Coordination for Emergency Management continues to monitor and provide assistance to the impacted municipalities and communities.  Last Saturday (26), President Rousseff flew over the region, which borders Argentina and Uruguay, and announced the provision of $6.6 million to help communities hit by the floods.  This has been the fifth flood this year in the state, and the most severe. The Quaraí river rose a record 15.28 meters. The situation got even worse with the rise of the Uruguay river.  The rainstorm has disrupted rice harvest in the municipality of Quaraí and caused the Quaraí-Artigas international bridge between Brazil and Uruguay to remain closed off for 22 hours.    Translated by Mayra Borges'
 expected_reports = []
-expected_reports.append(Report(['Rio Grande do Sul'], ['Dec. 28'], 'displace', 'household', '1,964', ''))
-expected_reports.append(Report(['Rio Grande do Sul'], ['Dec. 28'], 'affect', 'household', '2,214', ''))
+expected_reports.append(Report(['Rio Grande do Sul'], ['today', 'Dec. 28'], 'displace', 'household', '1,964', ''))
+expected_reports.append(Report(['Rio Grande do Sul'], ['today', 'Dec. 28'], 'affect', 'household', '2,214', ''))
 test_outcome = test_fact_extraction(article, expected_reports)
 outcomes.append(test_outcome)
 
