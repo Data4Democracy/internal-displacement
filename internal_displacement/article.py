@@ -9,6 +9,11 @@ def date_time_converter(dt):
         return "Invalid datetime"
 #        raise ValueError("{} is not a valid datetime object")
 
+def span_overlap(span1, span2):
+    set1 = set(span1)
+    if len(set1.intersection(span2)) > 0:
+        return True
+
 
 class Article(object):
     """Contains article text, date, extracted information and tag
@@ -50,12 +55,31 @@ class Article(object):
         which may in some cases overlap, particularly
         for date and location tags.
         '''
+        ### need to deal with overlapping spans
         all_spans = []
         for report in self.reports:
             all_spans.extend(report.tag_spans)
         unique_spans = list({v['start']: v for v in all_spans}.values())
         unique_spans = sorted(unique_spans, key=lambda k: k['start'])
-        return unique_spans
+        ### Check for no overlap
+        non_overlapping_spans = []
+        current_start = -1
+        current_end = -1
+        for span in unique_spans:
+            if span['start'] > current_end:
+                non_overlapping_spans.append(span)
+                current_start, current_end = span['start'], span['end']
+            else:
+                # Create a new merged span and add it to the end of the result
+                current_last_span = non_overlapping_spans[-1]
+                new_span = {}
+                new_span['type'] = ", ".join([current_last_span['type'], span['type']])
+                new_span['start'] = current_last_span['start']
+                new_span['end'] = max(current_last_span['end'], span['end'])
+                non_overlapping_spans[-1] = new_span
+                current_end = new_span['end']
+
+        return non_overlapping_spans
 
     def tag(self, tag):
         """Use interpreter to tag article
