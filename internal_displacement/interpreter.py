@@ -5,6 +5,7 @@ import spacy
 import os
 import textacy
 from internal_displacement.report import Report
+from internal_displacement.fact import Fact
 
 
 def strip_words(place_name):
@@ -271,6 +272,15 @@ class Interpreter():
                 matched.append(e)
         return matched
 
+    def convert_to_facts(self, fact_array, fact_type, start_offset=0):
+        facts = []
+        for fact in fact_array:
+            if isinstance(fact, spacy.tokens.token.Token):
+                facts.append(Fact(fact, fact, fact.lemma_, fact_type, start_offset))
+            elif isinstance(fact, spacy.tokens.span.Span):
+                facts.append(Fact(fact[0], fact, fact.lemma_, fact_type, start_offset))
+        return facts
+
     def extract_locations(self, sentence, root=None):
         """
         Examines a sentence and identifies if any of its constituent tokens describe a location.
@@ -298,12 +308,12 @@ class Interpreter():
             block_locations = self.match_entities_in_block(
                 location_entities, contiguous_token_block)
             if len(block_locations) > 0:
-                return [location.text for location in block_locations]
+                return self.convert_to_facts(block_locations, "loc", sentence[0].idx)
             else:
-                return location_entities  # If we cannot decide which one is correct, choose them all
+                return self.convert_to_facts(location_entities, "loc", sentence[0].idx) # If we cannot decide which one is correct, choose them all
                 # and figure it out at the report merging stage.
         elif len(location_entities) == 1:
-            return location_entities
+            return self.convert_to_facts(location_entities, "loc", sentence[0].idx)
         else:
             return []
 
@@ -339,11 +349,11 @@ class Interpreter():
             
             likely_block_dates = self.date_likelihood(block_dates, story)
             if likely_block_dates:
-                return likely_block_dates
+                return self.convert_to_facts(likely_block_dates, "date", sentence[0].idx)
         elif len(date_entities) == 1:
             likely_dates = self.date_likelihood(date_entities, story)
             if likely_dates:
-                return likely_dates
+                return self.convert_to_facts(likely_dates, "date", sentence[0].idx)
         else:
             return None
 
@@ -385,9 +395,9 @@ class Interpreter():
         # Find the verbs
         main_verbs = textacy.spacy_utils.get_main_verbs_of_sent(sentence)
         for v in main_verbs:
-            unit_type, verb_lemma = self.verb_relevance(v, story)
+            unit_type, verb = self.verb_relevance(v, story)
             if unit_type:
-                reports = self.branch_search_new(v, verb_lemma, unit_type, dates_memory, locations_memory, sentence,
+                reports = self.branch_search_new(verb, unit_type, dates_memory, locations_memory, sentence,
                                                  story)
                 sentence_reports.extend(reports)
         return sentence_reports
@@ -405,9 +415,10 @@ class Interpreter():
         3. Looking for special cases such as 'leave homeless'
         """
         if verb.lemma_ in self.structure_term_lemmas:
-            return self.structure_unit_lemmas, verb.lemma_
+            return self.structure_unit_lemmas, Fact(verb, verb, verb.lemma_, "term")
         elif verb.lemma_ in self.person_term_lemmas:
-            return self.person_unit_lemmas, verb.lemma_
+            return self.person_unit_lemmas, Fact(verb, verb, verb.lemma_, "term")
+
         elif verb.lemma_ == 'leave':
             children = verb.children
             obj_predicate = None
@@ -416,33 +427,41 @@ class Interpreter():
                     obj_predicate = child
             if obj_predicate:
                 if obj_predicate.lemma_ in self.structure_term_lemmas:
-                    return self.structure_unit_lemmas, 'leave ' + obj_predicate.lemma_
+                    return self.structure_unit_lemmas, Fact(verb, article[verb.i : obj_predicate.i + 1], 'leave ' + obj_predicate.lemma_, "term")
+
                 elif obj_predicate.lemma_ in self.person_term_lemmas:
-                    return self.person_unit_lemmas, 'leave ' + obj_predicate.lemma_
+                    return self.person_unit_lemmas, Fact(verb, article[verb.i : obj_predicate.i + 1], 'leave ' + obj_predicate.lemma_, "term")
+
         elif verb.lemma_ == 'affect' and self.article_relevance(article):
-            return self.structure_unit_lemmas + self.person_unit_lemmas, verb.lemma_
+            return self.structure_unit_lemmas + self.person_unit_lemmas, Fact(verb, verb, verb.lemma_, "term")
+
         elif verb.lemma_ in ('fear', 'assume'):
             verb_objects = textacy.spacy_utils.get_objects_of_verb(verb)
             if verb_objects:
                 verb_object = verb_objects[0]
                 if verb_object.lemma_ in self.person_term_lemmas:
-                    return self.person_unit_lemmas, verb.lemma_ + " " + verb_object.text
+                    return self.person_unit_lemmas, Fact(verb, article[verb.i : verb_object.i + 1], verb.lemma_ + " " + verb_object.text, "term")
+
                 elif verb_object.lemma_ in self.structure_term_lemmas:
-                    return self.structure_unit_lemmas, verb.lemma_ + " " + verb_object.text
+                    return self.structure_unit_lemmas, Fact(verb, article[verb.i : verb_object.i + 1], verb.lemma_ + " " + verb_object.text, "term")
+
         elif verb.lemma_ == 'claim':
-            dobjects = [v.text for v in textacy.spacy_utils.get_objects_of_verb(verb)]
-            if 'lives' in dobjects:
-                return self.person_unit_lemmas, verb.lemma_ + " " + "lives"
+            verb_objects = textacy.spacy_utils.get_objects_of_verb(verb)
+            for verb_object in verb_objects:
+                if verb_object.text == 'lives':
+                    return self.person_unit_lemmas, Fact(verb, article[verb.i : verb_object.i + 1], verb.lemma_ + " " + "lives", "term")
 
         return None, None
 
-    def get_quantity_from_phrase(self, phrase):
+    def get_quantity_from_phrase(self, phrase, offset=0):
         """
         Look for number-like tokens within noun phrase.
         """
         for token in phrase:
             if self.basic_number(token):
-                return token
+                return Fact(token, token, token.lemma_, "quantity", start_offset=offset)
+        else:
+            return Fact(None)
 
     def get_quantity(self, sentence, unit):
         """
@@ -457,13 +476,15 @@ class Interpreter():
         for i, np in enumerate(noun_phrases):
             if self.check_if_collection_contains_token(unit, np):
                 if unit.dep_ == 'conj':
-                    return self.get_quantity_from_phrase(noun_phrases[i - 1])
+                    return self.get_quantity_from_phrase(noun_phrases[i - 1], offset=sentence[0].idx)
                 else:
-                    return self.get_quantity_from_phrase(np)
+                    return self.get_quantity_from_phrase(np, offset=sentence[0].idx)
         # Case two - get any numeric child of the unit noun.
         for child in unit.children:
             if self.basic_number(child):
-                return child
+                return Fact(child, child, child.lemma_, "quantity")
+        else:
+            return Fact(None)
 
     def simple_subjects_and_objects(self, verb):
         verb_objects = textacy.spacy_utils.get_objects_of_verb(verb)
@@ -535,8 +556,25 @@ class Interpreter():
         else:
             return story[token.i + 1]
 
+    def set_report_span(self, facts):
+        '''Convert a list of facts into their corresponding
+        marker spans for visualizing with Displacy
+        '''
+        report_span = []
+        for f in facts:
+            if isinstance(f, list):
+                sub_spans = self.set_report_span(f)
+                report_span.extend(sub_spans)
+            elif f.token: # Make sure that the fact is not None (specifically for the case of Quantities)
+                span = {}
+                span['type'] = f.type_
+                span['start'] = f.start_idx
+                span['end'] = f.end_idx
+                report_span.append(span)
+        return report_span
 
-    def branch_search_new(self, verb, verb_lemma, search_type, dates_memory, locations_memory, sentence, story):
+
+    def branch_search_new(self, verb, search_type, dates_memory, locations_memory, sentence, story):
         """
         Extract reports based upon an identified verb (reporting term).
         Extract possible locations or use most recent locations
@@ -544,15 +582,15 @@ class Interpreter():
         Identify reporting unit by looking in objects and subjects of reporting term (verb)
         Identify quantity by looking in noun phrases.
         """
-        possible_locations = self.extract_locations(sentence, verb)
-        possible_dates = self.extract_dates(sentence, story, verb)
+        possible_locations = self.extract_locations(sentence, verb.token)
+        possible_dates = self.extract_dates(sentence, story, verb.token)
         if not possible_locations:
             possible_locations = locations_memory
         if not possible_dates:
             possible_dates = dates_memory
         reports = []
-        quantity = None
-        verb_objects = self.get_subjects_and_objects(story, sentence, verb)
+        quantity = Fact(None)
+        verb_objects = self.get_subjects_and_objects(story, sentence, verb.token)
         # If there are multiple possible nouns and it is unclear which is the correct one
         # choose the one with the fewest descendents. A verb object with many descendents is more likely to
         # have its own verb as a descendent.
@@ -565,19 +603,20 @@ class Interpreter():
                 # Test if the following word is either the verb in question
                 # Or if it is of the construction 'leave ____', then ____ is the following word
                 next_word = self.next_word(story, o)
-                if next_word and next_word.i == verb.i or next_word.text == verb_lemma.split(" ")[-1]:
-                    quantity = o
+                if next_word and next_word.i == verb.token.i or next_word.text == verb.lemma_.split(" ")[-1]:
                     if search_type == self.structure_term_lemmas:
                         unit = 'house'
                     else:
                         unit = 'person'
-                    report = Report(possible_locations, possible_dates, verb_lemma,
+                    quantity = Fact(o, o, o.lemma_, 'quantity')
+                    report = Report([p.text for p in possible_locations], [p.text for p in possible_dates], verb.lemma_,
                                     unit, quantity, story.text)
+                    report.tag_spans = self.set_report_span([verb, quantity, possible_locations, possible_dates])
                     # report.display()
                     reports.append(report)
                     break
             elif o.lemma_ in search_type:
-                reporting_unit = o.lemma_
+                reporting_unit = o
                 noun_conj = self.test_noun_conj(sentence, o)
                 if noun_conj:
                     reporting_unit = noun_conj
@@ -586,8 +625,11 @@ class Interpreter():
                 else:
                     # Try and get a number - begin search from noun.
                     quantity = self.get_quantity(sentence, o)
-                report = Report(possible_locations, possible_dates, verb_lemma,
-                                reporting_unit, quantity, story.text)
+
+                reporting_unit = Fact(reporting_unit, reporting_unit, reporting_unit.lemma_, "unit")
+                report = Report([p.text for p in possible_locations], [p.text for p in possible_dates], verb.lemma_,
+                                reporting_unit.lemma_, quantity, story.text)
+                report.tag_spans = self.set_report_span([verb, quantity, reporting_unit, possible_locations, possible_dates])
                 reports.append(report)
                 # report.display()
                 break
@@ -609,9 +651,9 @@ class Interpreter():
         processed_reports = []
         story = self.nlp(story)
         sentences = list(story.sents)  # Split into sentences
-        dates_memory = None  # Keep a running track of the most recent dates found in articles
+        dates_memory = []  # Keep a running track of the most recent dates found in articles
         # Keep a running track of the most recent locations found in articles
-        locations_memory = None
+        locations_memory = []
         for sentence in sentences:  # Process sentence
             reports = []
             reports = self.process_sentence_new(

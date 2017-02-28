@@ -12,7 +12,7 @@ def convert_tokens_to_strings(value):
 
 
 class Report:
-    def __init__(self, locations, date_times, event_term, subject_term, quantity, story):
+    def __init__(self, locations, date_times, event_term, subject_term, quantity, story, tag_spans=[]):
         if locations:
             self.locations = [convert_tokens_to_strings(l) for l in locations]
         else:
