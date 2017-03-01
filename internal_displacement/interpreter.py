@@ -517,6 +517,12 @@ class Interpreter():
             if preceding.dep_ in ('pobj', 'dobj') and preceding not in verb_objects:
                 verb_objects.append(preceding)
 
+        # see if unit directly follows verb
+        if verb.i < len(story) - 1:
+            following = story[verb.i + 1]
+            if following.dep_ in ('pobj', 'dobj') and following not in verb_objects:
+                verb_objects.append(following)
+
         # See if verb is part of a conjunction
         if verb.dep_ == 'conj':
             lefts = list(verb.lefts)
@@ -551,7 +557,7 @@ class Interpreter():
                 return conj
 
     def next_word(self, story, token):
-        if token.i == len(story):
+        if token.i == len(story) - 1:
             return None
         else:
             return story[token.i + 1]
@@ -603,7 +609,7 @@ class Interpreter():
                 # Test if the following word is either the verb in question
                 # Or if it is of the construction 'leave ____', then ____ is the following word
                 next_word = self.next_word(story, o)
-                if next_word and next_word.i == verb.token.i or next_word.text == verb.lemma_.split(" ")[-1]:
+                if next_word and (next_word.i == verb.token.i or next_word.text == verb.lemma_.split(" ")[-1]):
                     if search_type == self.structure_term_lemmas:
                         unit = 'house'
                     else:
