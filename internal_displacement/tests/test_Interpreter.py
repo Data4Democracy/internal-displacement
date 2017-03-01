@@ -61,12 +61,12 @@ class TestInterpreter(TestCase):
         countries = self.interpreter.extract_countries(test_article)
         self.assertIsInstance(countries, list)
         self.assertEqual(len(countries), 6)
-        self.assertIn('GB', countries)
-        self.assertIn('AF', countries)
-        self.assertIn('CN', countries)
-        self.assertIn('CA', countries)
-        self.assertIn('CU', countries)
-        self.assertIn('BA', countries)
+        self.assertIn('GBR', countries)
+        self.assertIn('AFG', countries)
+        self.assertIn('CHN', countries)
+        self.assertIn('CAN', countries)
+        self.assertIn('CUB', countries)
+        self.assertIn('BIH', countries)
         test_article = Article("No countries mentioned",
                                self.date, "test_title", "test_content_type", [
                                    "test_author_1", "test_author_2"], "www.butts.com", "www.butts.com/disasters")
