@@ -38,7 +38,7 @@ def province_country_code(place_name):
     subdivisions = (s for s in list(pycountry.subdivisions))
     for sub_division in subdivisions:
         if sub_division.name == place_name:
-            return sub_division.country_code
+            return sub_division.country.alpha_3
             break
 
 
@@ -49,22 +49,22 @@ def match_country_name(place_name):
     countries = (c for c in list(pycountry.countries))
     for country in countries:  # Loop through all countries
         if country.name == place_name:  # Look directly at country name
-            return country.alpha_2
+            return country.alpha_3
             break
         # In some cases the country also has a common name
         elif hasattr(country, 'common_name') and country.common_name == place_name:
-            return country.alpha_2
+            return country.alpha_3
             break
         # In some cases the country also has an official name
         elif hasattr(country, 'official_name') and country.official_name == place_name:
-            return country.alpha_2
+            return country.alpha_3
             break
         # In some cases the country name has the form Congo, The Democratic Republic of the
         # which may be hard to match directly
         elif re.match(r'\D+,\s{1}', country.name):
             common = re.search(r'(\D+),\s{1}', country.name).groups()[0]
             if common in place_name:
-                return country.alpha_2
+                return country.alpha_3
                 break
 
 
@@ -116,14 +116,18 @@ class Interpreter():
         if country_from_province:
             return country_from_province
         # Try getting the country code using a city name
-        return self.cities_to_countries.get(place_name, None)
+        country_code = self.cities_to_countries.get(place_name, None)
+        if country_code:
+            return pycountry.countries.get(alpha_2=country_code).alpha_3
+        return None
 
     def extract_countries(self, article):
         '''Extract the ISO codes for the countries mentioned
         in the article, and return an array containing all
         mentioned countries
         '''
-        text = " ".join([article.title, article.content])
+        #text = " ".join([article.title, article.content])
+        text = article
         doc = self.nlp(u"{}".format(text))
         possible_entities = set()
         for ent in doc.ents:
