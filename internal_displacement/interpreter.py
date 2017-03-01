@@ -126,8 +126,7 @@ class Interpreter():
         in the article, and return an array containing all
         mentioned countries
         '''
-        #text = " ".join([article.title, article.content])
-        text = article
+        text = " ".join([article.title, article.content])
         doc = self.nlp(u"{}".format(text))
         possible_entities = set()
         for ent in doc.ents:
