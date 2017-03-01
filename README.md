@@ -85,25 +85,30 @@ another option is to run in a Docker container. That way, all of the dependencie
 be installed in a controlled, reproducible way.
 
 1. Install Docker: https://www.docker.com/products/overview
-2. Build the docker container (unfortunately, this will take a while):
+2. Build the docker container (unfortunately, this will take a while the first time):
 
 ```
 docker build -t internal-displacement .
 ```
+You'll need to do this again if you want to install python dependencies by adding them to `requirements.txt`,
+but it should be faster on subsequent runs.
 
-    
-3. Run the container. By default, this starts a jupyter notebook server:
+3. Run the container. By default, this starts a jupyter notebook server (change the first 8888 to another port, if you're already running something there):
 
 ```
-docker run -it --rm -p 8888:8888 -v $PWD:/project internal-displacement
+docker run -it --rm --env-file docker.env -p 8888:8888 -v $PWD:/project internal-displacement
 ```
-
-Change the first 8888 to another port, if you're already running something there.
+ - `-it` set up the terminal to run interactively
+ - `--rm` remove the container when it's finished
+ - `--env-file docker.env` set up environment variables from this file (notably, tells it where the DB is)
+ - `-p 8888:8888` map http://localhost:8888 to the jupyter server running on port 8888 inside the docker container
+ - `-v $PWD:/project` map the current directory into the docker container so that changes you make inside the container
+ also appear out here
     
 4. You can also run the unit tests with:
 
 ```
-docker run --rm internal-displacement nosetests
+docker run --rm --env-file docker.env -v $PWD:/project internal-displacement nosetests
 ```
 
 
