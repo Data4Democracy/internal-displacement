@@ -135,3 +135,8 @@ We currently need people with skills in:
 - Datasets can be accessed from [Dropbox](https://www.dropbox.com/sh/59lyts9d4ar1jcc/AADMyxDSQC_NGbpaPiuDGJ2ha?dl=0)
 - We have a [working plan](workplan.md) for the project.
 - Not ready to submit code to the main project? Feel free to play around with notebooks and submit them to the repository.
+
+
+### Things that inspire us
+
+[Refugees on IBM Watson News Explorer](http://news-explorer.mybluemix.net/?query=Refugees&type=unconstrained)
