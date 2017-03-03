@@ -127,8 +127,7 @@ class Interpreter():
         in the article, and return an array containing all
         mentioned countries
         '''
-        text = " ".join([article.title, article.content])
-        doc = self.nlp(u"{}".format(text))
+        doc = self.nlp(u"{}".format(article))
         possible_entities = set()
         for ent in doc.ents:
             if ent.label_ in ('GPE', 'LOC'):
