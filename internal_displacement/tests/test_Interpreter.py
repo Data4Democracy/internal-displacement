@@ -44,9 +44,8 @@ class TestInterpreter(TestCase):
         test_article = Article("A decent amount of test content which will be used for extracting the language",
                                self.date, "test_title", "test_content_type", [
                                    "test_author_1", "test_author_2"], "www.butts.com", "www.butts.com/disasters")
-        self.interpreter.check_language(test_article)
-        article_language = test_article.language
-        self.assertEqual(article_language, "en")
+        language = self.interpreter.check_language(test_article.content)
+        self.assertEqual(language, "en")
 
     def test_strip_words(self):
         test_place_name = 'the province county district city'

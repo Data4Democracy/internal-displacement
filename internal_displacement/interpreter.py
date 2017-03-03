@@ -78,6 +78,7 @@ class Interpreter():
             " ".join(person_reporting_terms))]
         self.structure_term_lemmas = [t.lemma_ for t in self.nlp(
             " ".join(structure_reporting_terms))]
+        self.joint_term_lemmas = list(set(self.structure_term_lemmas) & set(self.person_term_lemmas))
         self.person_unit_lemmas = [t.lemma_ for t in self.nlp(
             " ".join(person_reporting_units))]
         self.structure_unit_lemmas = [t.lemma_ for t in self.nlp(
@@ -91,10 +92,10 @@ class Interpreter():
         and update the article property 'language'
         '''
         try:
-            language = textacy.text_utils.detect_language(article.content)
+            language = textacy.text_utils.detect_language(article)
         except ValueError:
             language = 'na'
-        article.language = language
+        return language
 
     def check_relevance(self, article):
         '''Tag the article as relevant or not based
@@ -126,8 +127,7 @@ class Interpreter():
         in the article, and return an array containing all
         mentioned countries
         '''
-        text = " ".join([article.title, article.content])
-        doc = self.nlp(u"{}".format(text))
+        doc = self.nlp(u"{}".format(article))
         possible_entities = set()
         for ent in doc.ents:
             if ent.label_ in ('GPE', 'LOC'):
@@ -417,7 +417,9 @@ class Interpreter():
         2. Comparing to person term lemmas
         3. Looking for special cases such as 'leave homeless'
         """
-        if verb.lemma_ in self.structure_term_lemmas:
+        if verb.lemma_ in self.joint_term_lemmas:
+            return self.structure_unit_lemmas + self.person_unit_lemmas, Fact(verb, verb, verb.lemma_, "term")
+        elif verb.lemma_ in self.structure_term_lemmas:
             return self.structure_unit_lemmas, Fact(verb, verb, verb.lemma_, "term")
         elif verb.lemma_ in self.person_term_lemmas:
             return self.person_unit_lemmas, Fact(verb, verb, verb.lemma_, "term")
@@ -517,13 +519,13 @@ class Interpreter():
         # see if unit directly precedes verb
         if verb.i > 0:
             preceding = story[verb.i - 1]
-            if preceding.dep_ in ('pobj', 'dobj') and preceding not in verb_objects:
+            if preceding.dep_ in ('pobj', 'dobj', 'nsubj', 'conj') and preceding not in verb_objects:
                 verb_objects.append(preceding)
 
         # see if unit directly follows verb
         if verb.i < len(story) - 1:
             following = story[verb.i + 1]
-            if following.dep_ in ('pobj', 'dobj') and following not in verb_objects:
+            if following.dep_ in ('pobj', 'dobj', 'ROOT') and following not in verb_objects:
                 verb_objects.append(following)
 
         # See if verb is part of a conjunction
