@@ -91,10 +91,10 @@ class Interpreter():
         and update the article property 'language'
         '''
         try:
-            language = textacy.text_utils.detect_language(article.content)
+            language = textacy.text_utils.detect_language(article)
         except ValueError:
             language = 'na'
-        article.language = language
+        return language
 
     def check_relevance(self, article):
         '''Tag the article as relevant or not based
