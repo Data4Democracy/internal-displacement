@@ -4,8 +4,22 @@ import json
 import spacy
 import os
 import textacy
+import unicodedata
+import urllib.request
 from internal_displacement.report import Report
 from internal_displacement.fact import Fact
+
+
+def strip_accents(s):
+    '''Strip out accents from text'''
+    return ''.join(c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn')
+
+
+def compare_strings(s1, s2):
+    '''Compare two strings by first stripping out accents'''
+    s1_clean = strip_accents(s1).lower()
+    s2_clean = strip_accents(s2).lower()
+    return s1_clean == s2_clean
 
 
 def strip_words(place_name):
@@ -18,6 +32,18 @@ def strip_words(place_name):
     pattern = re.compile("|".join(rep.keys()))
     place_name = pattern.sub(lambda m: rep[re.escape(m.group(0))], place_name)
     return place_name.strip().title()
+
+
+def mapzen_request(place_name):
+    key = 'mapzen-i8JEmx7'
+    base_url = 'https://search.mapzen.com/v1/search'
+    qry = { 'text': place_name, 'api_key': key }
+    url = "{}?{}".format(base_url, urllib.parse.urlencode(qry))
+    res = urllib.request.urlopen(url)
+    res_body = res.read()
+    j = json.loads(res_body.decode("utf-8"))
+    if len(j['features']) > 0:
+        return j['features'][0]['properties']['country_a']
 
 
 def common_names(place_name):
@@ -37,7 +63,7 @@ def province_country_code(place_name):
     '''
     subdivisions = (s for s in list(pycountry.subdivisions))
     for sub_division in subdivisions:
-        if sub_division.name == place_name:
+        if compare_strings(sub_division.name, place_name):
             return sub_division.country.alpha_3
             break
 
@@ -117,7 +143,7 @@ class Interpreter():
         if country_from_province:
             return country_from_province
         # Try getting the country code using a city name
-        country_code = self.cities_to_countries.get(place_name, None)
+        country_code = self.cities_to_countries.get(strip_accents(place_name), None)
         if country_code:
             return pycountry.countries.get(alpha_2=country_code).alpha_3
         return None
