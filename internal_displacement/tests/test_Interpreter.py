@@ -57,7 +57,7 @@ class TestInterpreter(TestCase):
         test_article = Article("The United Kingdom plus Afghanistan plus Sichuan Province, as well as Toronto, Cuba and Bosnia",
                                self.date, "test_title", "test_content_type", [
                                    "test_author_1", "test_author_2"], "www.butts.com", "www.butts.com/disasters")
-        countries = self.interpreter.extract_countries(test_article)
+        countries = self.interpreter.extract_countries(test_article.content)
         self.assertIsInstance(countries, list)
         self.assertEqual(len(countries), 6)
         self.assertIn('GBR', countries)
