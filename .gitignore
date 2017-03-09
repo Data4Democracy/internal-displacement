@@ -7,3 +7,4 @@ id-tests.ipynb
 *.sqlite
 *.pdf
 .DS_Store
+.idea/
