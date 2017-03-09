@@ -1,6 +1,7 @@
 import csv
 from internal_displacement.scraper import scrape
 from internal_displacement.article import Article
+from internal_displacement.report import Report
 import concurrent
 from concurrent import futures
 import sqlite3
@@ -171,6 +172,8 @@ class SQLArticleInterface(object):
         content_type = article.content_type
         title = article.title
         language = article.language
+        reports = article.reports
+
         if article.content == "retrieval_failed":
             return None
         try:
@@ -183,10 +186,24 @@ class SQLArticleInterface(object):
         except Exception as e:
             print("Exception: {}".format(e))
 
+        # Insert reports 
+        # Note: This may need to modify to work with sqlalchemy
+        if len(reports) == 0:
+            # If no reports, article is not relevant
+            article.relevance = False
+        elif language == 'en':
+            # There are reports. Insert them if article is english
+            for report in reports:
+                try:
+                    self.insert_report(report)
+                except Exception as e:
+                    print("Exception: {}".format(e))
+
     def update_article(self, article):
         """
         Updates certain fields of article in database
         Fields that can be updated are: language
+        TODO: Do we want to update other fields like Reports here too?
         :param article:     An Article object
         """
         language = article.language
@@ -195,6 +212,34 @@ class SQLArticleInterface(object):
             self.sql_cursor.execute("""UPDATE Articles SET language = ? WHERE url = ?""",
                                     (language, url))
             self.sql_connection.commit()
+        except Exception as e:
+            print("Exception: {}".format(e))
+
+    def insert_report(self, report):
+        '''
+        Insert the given Report and its other relevant info to DB.
+        (Note: this will need to be modified to use the sqlalchemy and the 
+            updated schema from @aneel's #100 PR)
+        :param report:      A Report schema object
+        :param article:     An Article schema object
+        '''
+        try:
+            self.sql_cursor.execute('''
+            INSERT INTO REPORT VALUES (?,?,?,?,?,?,?,?,)''',
+            (report.story, report.event_term, report.subject_term, report.quantity, 
+                report.tag_spans, report.accuracy, report.analyzer, report.analysis_date))
+
+            for loc in report.locations:
+                self.sql_cursor.execute('''
+                INSERT INTO REPORT_LOCATION VALUES (?,?)''',
+                (report, loc))
+
+            for date_time in report.date_times:
+                # Need to revise how date spans work in Report
+                self.sql_cursor.execute('''
+                INSERT INTO REPORT_DATESPAN VALUES (?,?)''',
+                (report, date_time))
+
         except Exception as e:
             print("Exception: {}".format(e))
 
