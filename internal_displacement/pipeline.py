@@ -182,7 +182,7 @@ class SQLArticleInterface(object):
             self.sql_connection.commit()
         except sqlite3.IntegrityError:
             print(
-                "URL{url} already exists in article table. Skipping.".format(self.url))
+                "URL{url} already exists in article table. Skipping.".format(url))
         except Exception as e:
             print("Exception: {}".format(e))
 
