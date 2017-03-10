@@ -3,7 +3,7 @@ import csv
 import urllib
 from urllib import request
 from urllib.parse import urlparse
-from internal_displacement.article import Article
+from internal_displacement.model.model import Article, Status, Content
 import textract
 import os
 from collections import OrderedDict
@@ -82,7 +82,7 @@ def format_date(date_string):
     return formatted_date
 
 
-def html_article(url):
+def html_article(session, url):
     """Downloads and extracts content plus metadata for html page
     Parameters
     ----------
@@ -93,25 +93,40 @@ def html_article(url):
     article: An object of class Article containing the content and metadata.
     """
 
-    a = newspaper.Article(url)
-    a.download()
-    if a.is_downloaded:
-        a.parse()
-        article_domain = a.source_url
-        article_title = a.title
-        article_authors = a.authors
-        article_pub_date = a.publish_date
-        article_text = remove_newline(a.text)
-        # tag the type of article
-        # currently default to text but should be able to determine img/video
-        # etc
-        article_content_type = 'text'
-        article = Article(article_text, article_pub_date, article_title,
-                          article_content_type, article_authors, article_domain, url)
+    article = session.query(Article).filter_by(url=url).one_or_none()
+    if article is None:
+        article = Article(url=url, status=Status.NEW)
+        session.add(article)
+    elif article.status not in [Status.NEW, Status.FETCHING_FAILED]:
+        # We have already successfully fetched this, don't re-fetch
         return article
-    else:  # Temporary fix to deal with https://github.com/codelucas/newspaper/issues/280
-        return Article("retrieval_failed", "", "", datetime.datetime.now(), "", "", url)
-
+    article.status = Status.FETCHING
+    session.commit()
+    try:
+        a = newspaper.Article(url)
+        a.download()
+        if a.is_downloaded:
+            a.parse()
+            article.url = url
+            article.domain = a.source_url
+            article.status = Status.FETCHED
+            article.title = a.title
+            article.publication_date = a.publish_date
+            article.authors = a.authors
+            article.content = Content(
+                article=article,
+                retrieval_date=datetime.datetime.now(),
+                content=remove_newline(a.text),
+                content_type='text'
+            )
+        else:
+            article.status = Status.FETCHING_FAILED
+        session.commit()
+    except:
+        session.rollback()
+        article.status = Status.FETCHING_FAILED
+        session.commit()
+    return article
 
 def get_pdf(url):
     ''' Takes a pdf url, downloads it and saves it locally.'''
