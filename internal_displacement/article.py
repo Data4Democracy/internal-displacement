@@ -1,4 +1,3 @@
-from internal_displacement.interpreter import Interpreter
 import datetime
 
 
@@ -45,10 +44,6 @@ class Article(object):
         self.language = language
         self.relevance = relevance
         
-        # Get Reports
-        interpreter = Interpreter()
-        self.reports = interpreter.process_article_new(self.content)
-
     def change_language(self, language):
         self.language = language
 

@@ -2,6 +2,7 @@ import csv
 from internal_displacement.scraper import scrape
 from internal_displacement.article import Article
 from internal_displacement.report import Report
+from internal_displacement.interpreter import Interpreter
 import concurrent
 from concurrent import futures
 import sqlite3
@@ -235,7 +236,7 @@ class SQLArticleInterface(object):
                 (report, loc))
 
             for date_time in report.date_times:
-                # Need to revise how date spans work in Report
+                # (@domingohui Mar 9 2017) Need to revise how date spans work in Report
                 self.sql_cursor.execute('''
                 INSERT INTO REPORT_DATESPAN VALUES (?,?)''',
                 (report, date_time))
@@ -260,6 +261,7 @@ class SQLArticleInterface(object):
 
         article_futures = []
         with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+            interpreter = None # To be initialized later
             for url in urls:
                 article_futures.append(executor.submit(scrape, url, scrape_pdfs))
             for f in concurrent.futures.as_completed(article_futures):
@@ -269,6 +271,16 @@ class SQLArticleInterface(object):
                         continue
                     else:
                         print(article.title)
+                        if interpreter is None:
+                            # Lazy initialize Interpreter
+                            interpreter = Interpreter()
+                        # Obtain langugae of the article
+                        article.language = interpreter.check_language(article)
+                        # Obtain reports of the article
+                        article.reports = interpreter.process_article_new(article)
+                        # Obtain codes of countries related to the article
+                        article.country_codes = interpreter.extract_countries(article)
+
                         self.insert_article(article)
                 except Exception as e:
                     print("Exception: {}".format(e))
