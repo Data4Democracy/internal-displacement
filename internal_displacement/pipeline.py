@@ -1,11 +1,14 @@
-import csv
-from internal_displacement.scraper import scrape
-from internal_displacement.article import Article
 import concurrent
-from concurrent import futures
-import sqlite3
-import pandas as pd
+import csv
 import numpy as np
+import pandas as pd
+import re
+import records
+import sqlite3
+from concurrent import futures
+
+from internal_displacement.article import Article
+from internal_displacement.scraper import scrape
 
 
 """
@@ -142,21 +145,20 @@ class SQLArticleInterface(object):
     Core SQL interface.
     """
 
-    def __init__(self, sql_database_file):
+    def __init__(self, db_url=None):
         """
         Initialize an instance of SQLArticleInterface with the path to a SQL database file.
             - If the file does not exist it will be created.
             - If the file does exist, all previously stored data will be accessible through the object methods
         :param sql_database_file:   The path to the sql database file
         """
-        self.sql_connection = sqlite3.connect(
-            sql_database_file, isolation_level=None)
-        self.sql_cursor = self.sql_connection.cursor()
-        self.sql_cursor.execute(
-            """CREATE TABLE IF NOT EXISTS Articles (title TEXT, url TEXT,author TEXT,publish_date TEXT,domain TEXT,
-                content TEXT, content_type TEXT, language TEXT)""")
-        self.sql_cursor.execute(
-            "CREATE TABLE IF NOT EXISTS Labels (url TEXT,category TEXT)")
+        self.db = records.Database(db_url)
+        if db_url.startswith('sqlite'):
+            self.db.query(
+                """CREATE TABLE IF NOT EXISTS Articles (url TEXT, title TEXT,author TEXT,publish_date TEXT,domain TEXT,
+                    content TEXT, content_type TEXT, language TEXT)""")
+            self.db.query(
+                "CREATE TABLE IF NOT EXISTS Labels (url TEXT,category TEXT)")
 
     def insert_article(self, article):
         """
@@ -174,14 +176,20 @@ class SQLArticleInterface(object):
         if article.content == "retrieval_failed":
             return None
         try:
-            self.sql_cursor.execute("INSERT INTO Articles VALUES (?,?,?,?,?,?,?,?)",
-                                    (title, url, authors, pub_date, domain, content, content_type, language))
-            self.sql_connection.commit()
-        except sqlite3.IntegrityError:
-            print(
-                "URL{url} already exists in article table. Skipping.".format(self.url))
+            self.db.query("""
+            INSERT INTO Articles (url, title, author, publish_date, domain, content, content_type, language)
+            VALUES (:url, :title, :authors, :pub_date, :domain, :content, :content_type, :language)""",
+                          url=article.url,
+                          title=article.title,
+                          authors=",".join(article.authors),
+                          pub_date=article.get_pub_date_string(),
+                          domain=article.domain,
+                          content=article.content,
+                          content_type=article.content_type,
+                          language=article.language)
         except Exception as e:
             print("Exception: {}".format(e))
+
 
     def update_article(self, article):
         """
@@ -189,11 +197,10 @@ class SQLArticleInterface(object):
         Fields that can be updated are: language
         :param article:     An Article object
         """
-        language = article.language
-        url = article.url
         try:
-            self.sql_cursor.execute("""UPDATE Articles SET language = ? WHERE url = ?""",
-                                    (language, url))
+            self.db.query("""UPDATE Articles SET language = :language WHERE url = :url""",
+                          language=article.language,
+                          url=article.url)
             self.sql_connection.commit()
         except Exception as e:
             print("Exception: {}".format(e))
@@ -209,8 +216,8 @@ class SQLArticleInterface(object):
         """
         dataset = csv_read(url_csv)
         urls = urls_from_csv(dataset, url_column)
-        existing_urls = [r[0]
-                         for r in self.sql_cursor.execute("SELECT url FROM Articles")]
+        existing_urls = [r.url
+                         for r in self.db.query("SELECT url FROM Articles")]
         urls = [u for u in urls if u not in existing_urls]
 
         article_futures = []
@@ -239,13 +246,13 @@ class SQLArticleInterface(object):
         df = pd.read_csv(
             csv_filepath)  # For now just using pandas, but could replace with a custom function
         urls = list(df[url_column_name].values)
-        existing_urls = [r[0]
-                         for r in self.sql_cursor.execute("SELECT url FROM Labels")]
+        existing_urls = [r.url
+                         for r in self.db.query("SELECT url FROM Labels")]
         urls = [u for u in urls if u not in existing_urls]
         labels = list(df[label_column_name].values)
         values = list(zip(urls, labels))
-        self.sql_cursor.executemany("INSERT INTO Labels VALUES (?, ?)", values)
-        self.sql_connection.commit()
+        for url, label in values:
+            self.db.query("INSERT INTO Labels VALUES (:url, :label)", url=url, label=label)
 
     def to_csv(self, table, output):
         """
@@ -253,15 +260,14 @@ class SQLArticleInterface(object):
         :param table: The name of the table to export
         :param output: The path of the output file
         """
+        if re.search("\W", table):
+            raise ValueError("Supplied table name includes non-alphanumeric characters " + table)
         try:
-            data = self.sql_cursor.execute("SELECT * FROM " + table)
-            headers = cursor = list(map(lambda x: x[0], self.sql_cursor.description))
+            rows = self.db.query("SELECT * FROM " + table)
         except ValueError:
             print("Not a valid table.")
         with open(output, 'w') as f:
-            writer = csv.writer(f)
-            writer.writerow(headers)
-            writer.writerows(data)
+            f.write(rows.export('csv'))
 
     def get_training_data(self):
         """
@@ -270,8 +276,8 @@ class SQLArticleInterface(object):
             Two numpy arrays; one containing texts and one containing labels.
         """
 
-        training_cases = self.sql_cursor.execute(
-            "SELECT content,category FROM Articles INNER JOIN Labels ON Articles.url = Labels.url").fetchall()
-        labels = [r[1] for r in training_cases]
-        features = [r[0] for r in training_cases]
+        training_cases = self.db.query(
+            "SELECT content,category FROM Articles INNER JOIN Labels ON Articles.url = Labels.url")
+        labels = [r.category for r in training_cases]
+        features = [r.content for r in training_cases]
         return labels, features
