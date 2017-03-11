@@ -1,4 +1,7 @@
-from sqlalchemy import Table
+import os
+
+from sqlalchemy import Table, text
+from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean, Numeric
 from sqlalchemy.orm import sessionmaker, relationship
@@ -121,3 +124,19 @@ class ReportDateSpan(Base):
     report = relationship('Report', back_populates='datespans')
     start = Column(DateTime)
     finish = Column(DateTime)
+
+
+def init_db(db_url, i_know_this_will_delete_everything=False):
+    """
+    Warning! This will delete everything in the database!
+    :param session: SQLAlchemy session
+    """
+    if not i_know_this_will_delete_everything:
+        raise RuntimeError("Tried to init_db without knowing it would delete everything!")
+    engine = create_engine(db_url)
+    Session.configure(bind=engine)
+    session = Session()
+    sql_path = os.path.join(os.path.dirname(__file__), 'schema.sql')
+    with open(sql_path, 'r') as schema:
+        session.execute(text(schema.read()))
+    session.commit()

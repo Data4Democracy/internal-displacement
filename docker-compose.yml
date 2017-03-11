@@ -1,0 +1,18 @@
+version: '3'
+services:
+  localdb:
+    build: localdb
+    image: localdb
+  jupyter:
+    build: .
+    image: internal_displacement
+    command: sh -c "jupyter notebook --no-browser --ip=0.0.0.0 /project/notebooks"
+    env_file: docker.env
+    stdin_open: true
+    tty: true
+    volumes:
+      - .:/project
+    ports:
+      - "8888:8888"
+    depends_on:
+      - localdb
