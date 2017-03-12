@@ -20,7 +20,9 @@ services:
     build: internal-displacement-web
     image: internal-displacement-web
     volumes:
-      - ./internal-displacement-web:/internal-displacement-web
+      - ./internal-displacement-web/src:/internal-displacement-web/src
+      - ./internal-displacement-web/package.json:/internal-displacement-web/package.json
+      - ./internal-displacement-web/index.html:/internal-displacement-web/index.html
     ports:
       - "3000:80"
     depends_on:
