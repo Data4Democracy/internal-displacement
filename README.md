@@ -85,31 +85,49 @@ another option is to run in a Docker container. That way, all of the dependencie
 be installed in a controlled, reproducible way.
 
 1. Install Docker: https://www.docker.com/products/overview
-2. Build the docker container (unfortunately, this will take a while the first time):
+
+2. Run this command:
+
+   ```
+   docker-compose up
+   ```
+
+   Unfortunately, this will take quite a while the first time. It's fetching and building
+   all of its dependencies. Subsequent runs should be much faster.
+
+   This will start up a couple of docker containers, one running postgres, and the other
+   running a Jupyter notebook server.
+
+   In the output, you should see a line like:
+   ```
+   jupyter_1  |         http://0.0.0.0:8888/?token=536690ac0b189168b95031769a989f689838d0df1008182c
+   ```
+
+   That URL will connect you to the Jupyter notebook server.
+
+3. Set up the database schema by running the contents of the
+[InitDB.ipynb](http://0.0.0.0:8888/notebooks/InitDB.ipynb) notebook.
+
+
+Note: You can stop the docker containers using Ctrl-C.
+
+Note: If you already have something running on port 8888, edit `docker-compose.yml` and change the *first* 8888
+in the ports config to a free port on your system. eg. for 9999, make it:
+```
+    ports:
+      - "9999:8888"
+```
+
+Note: If you want to add python dependencies, add them to `requirements.txt` and run `docker-compose up --build`.
+
+Note: if you want to run SQL commands againt the database directly, you can do
+that by starting a Terminal within Jupyter and running the PostgreSQL shell:
+```
+psql -h localdb -U tester id_test
 
 ```
-docker build -t internal-displacement .
-```
-You'll need to do this again if you want to install python dependencies by adding them to `requirements.txt`,
-but it should be faster on subsequent runs.
 
-3. Run the container. By default, this starts a jupyter notebook server (change the first 8888 to another port, if you're already running something there):
-
-```
-docker run -it --rm --env-file docker.env -p 8888:8888 -v $PWD:/project internal-displacement
-```
- - `-it` set up the terminal to run interactively
- - `--rm` remove the container when it's finished
- - `--env-file docker.env` set up environment variables from this file (notably, tells it where the DB is)
- - `-p 8888:8888` map http://localhost:8888 to the jupyter server running on port 8888 inside the docker container
- - `-v $PWD:/project` map the current directory into the docker container so that changes you make inside the container
- also appear out here
-    
-4. You can also run the unit tests with:
-
-```
-docker run --rm --env-file docker.env -v $PWD:/project internal-displacement nosetests
-```
+Note: If you want to connect to a remote database, edit the `docker.env` file with the DB url for your remote database.
 
 
 ### Progress

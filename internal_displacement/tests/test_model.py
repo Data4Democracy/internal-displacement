@@ -3,17 +3,17 @@ from datetime import datetime
 from unittest import TestCase
 
 from sqlalchemy import create_engine
+
 from internal_displacement.model.model import Status, Session, Category, Article, Content, Country, CountryTerm, \
     Location, Report, ReportDateSpan, ArticleCategory
 
 
 class TestModel(TestCase):
-
     def setUp(self):
-        DB_URL = os.environ.get('DB_URL')
-        if not DB_URL.endswith('/id_test'):
-            raise RuntimeError('Refusing to run tests against non-test database')
-        engine = create_engine(DB_URL)
+        db_host = os.environ.get('DB_HOST')
+        db_url = 'postgresql://{user}:{passwd}@{db_host}/{db}'.format(
+            user='tester', passwd='tester', db_host=db_host, db='id_test')
+        engine = create_engine(db_url)
         Session.configure(bind=engine)
         self.session = Session()
 
@@ -33,12 +33,12 @@ class TestModel(TestCase):
         ArticleCategory(article=article, category=Category.OTHER)
         self.session.add(article)
 
-        article2 = self.session.query(Article).filter_by(status = Status.NEW).one()
+        article2 = self.session.query(Article).filter_by(status=Status.NEW).one()
         self.assertEqual(article2.domain, 'example.com')
         self.assertEqual(article2.content.content, "La la la")
         self.assertCountEqual([c.category for c in article2.categories], ['disaster', 'other'])
 
-        article3 = self.session.query(Article).filter_by(status = Status.NEW).one()
+        article3 = self.session.query(Article).filter_by(status=Status.NEW).one()
         self.assertEqual(article3.domain, 'example.com')
 
     def test_delete_article(self):
@@ -61,15 +61,14 @@ class TestModel(TestCase):
                 self.session.delete(article)
             self.session.commit()
 
-
     def test_country_term(self):
         mmr = self.session.query(Country).filter_by(code="MMR").one_or_none() or Country(code="MMR")
         myanmar = CountryTerm(term="Myanmar", country=mmr)
         burma = CountryTerm(term="Burma", country=mmr)
         self.session.add(mmr)
 
-        myanmar = self.session.query(Country).join(CountryTerm).filter_by(term = 'Myanmar').one()
-        burma = self.session.query(Country).join(CountryTerm).filter_by(term = 'Burma').one()
+        myanmar = self.session.query(Country).join(CountryTerm).filter_by(term='Myanmar').one()
+        burma = self.session.query(Country).join(CountryTerm).filter_by(term='Burma').one()
         self.assertEqual(myanmar, burma)
 
     def test_location(self):
@@ -94,7 +93,6 @@ class TestModel(TestCase):
                             quantity='72')
             self.session.add(report)
             self.session.commit()  # have to commit here to get the ID set
-            print(report.id)
 
             naypyidaw = Location(description="Nay Pyi Taw", country=mmr, latlong='19°45′N 96°6′E')
             report.locations.append(naypyidaw)
@@ -103,7 +101,7 @@ class TestModel(TestCase):
             now = datetime.now()
             when = ReportDateSpan(report=report, start=datetime.today(), finish=now)
 
-            article2 = self.session.query(Article).filter_by(domain = 'example.com').first()
+            article2 = self.session.query(Article).filter_by(domain='example.com').first()
             self.assertEqual(len(article2.reports), 1)
 
             article3 = self.session.query(Article).join(Report).filter(Report.locations.contains(dhaka)).first()
@@ -115,7 +113,6 @@ class TestModel(TestCase):
             if article:
                 self.session.delete(article)
             self.session.commit()
-
 
     def test_report_delete(self):
         article = None
