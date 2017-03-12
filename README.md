@@ -86,9 +86,9 @@ be installed in a controlled, reproducible way.
 
 1. Install Docker: https://www.docker.com/products/overview
 
-2. Add the web interface as a submodule...
+2. Pull in the web interface as a submodule...
    ```
-   git submodule add git@github.com:Data4Democracy/internal-displacement-web.git
+   git submodule update --init --recursive .
 
    ```
 
