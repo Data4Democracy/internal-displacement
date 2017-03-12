@@ -3,17 +3,17 @@ from datetime import datetime
 from unittest import TestCase
 
 from sqlalchemy import create_engine
+
 from internal_displacement.model.model import Status, Session, Category, Article, Content, Country, CountryTerm, \
     Location, Report, ReportDateSpan, ArticleCategory
 
 
 class TestModel(TestCase):
-
     def setUp(self):
-        DB_URL = os.environ.get('DB_URL')
-        if not DB_URL.endswith('/id_test'):
-            raise RuntimeError('Refusing to run tests against non-test database')
-        engine = create_engine(DB_URL)
+        db_host = os.environ.get('DB_HOST')
+        db_url = 'postgresql://{user}:{passwd}@{db_host}/{db}'.format(
+            user='tester', passwd='tester', db_host=db_host, db='id_test')
+        engine = create_engine(db_url)
         Session.configure(bind=engine)
         self.session = Session()
 
