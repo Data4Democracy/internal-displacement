@@ -116,6 +116,9 @@ class Interpreter():
     def check_language(self, article):
         '''Identify the language of the article content
         and update the article property 'language'
+        Parameters
+        ----------
+        article:        the content of the article:String
         '''
         try:
             language = textacy.text_utils.detect_language(article)
@@ -682,7 +685,12 @@ class Interpreter():
 
     def process_article_new(self, story):
         """
-        Process a story once sentence at a time
+        Process a story one sentence at a time
+        Returns a list of reports in the story
+
+        Parameters
+        ----------
+        story:      the article content:String
         """
         story = self.cleanup(story)
         processed_reports = []

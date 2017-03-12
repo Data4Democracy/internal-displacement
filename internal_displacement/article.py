@@ -1,4 +1,3 @@
-
 import datetime
 
 
@@ -27,6 +26,7 @@ class Article(object):
         content_type:           the type of content (text,image,video etc):String
         url:                    the url of the article:String
         language:               the two-letter language code of the article:String
+                                    see https://cloud.google.com/translate/docs/languages
         country_codes:          a list of ISO 3166 country codes:List
         reports:                a list of extracted reports
         relevance:              relevance of article to IDPs:Boolean
@@ -43,7 +43,7 @@ class Article(object):
         self.url = url
         self.language = language
         self.relevance = relevance
-
+        
     def change_language(self, language):
         self.language = language
 
