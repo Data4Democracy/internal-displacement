@@ -5,7 +5,7 @@ from unittest import TestCase
 from sqlalchemy import create_engine
 
 from internal_displacement.model.model import Status, Session, Category, Article, Content, Country, CountryTerm, \
-    Location, Report, ReportDateSpan, ArticleCategory
+    Location, Report, ReportDateSpan, ArticleCategory, UnexpectedArticleStatusException
 
 
 class TestModel(TestCase):
@@ -150,3 +150,21 @@ class TestModel(TestCase):
             if article:
                 self.session.delete(article)
             self.session.commit()
+
+    def test_status_update(self):
+        article = Article(url='http://example.com',
+                          domain='example.com',
+                          status=Status.NEW)
+        self.session.add(article)
+        self.session.commit()
+
+        article.update_status(Status.FETCHING)
+        self.session.commit()
+        self.assertEqual(article.status, Status.FETCHING)
+
+        # meanwhile, some other process changed the status of this...
+        self.session.execute("UPDATE article SET status = :status WHERE id = :id",
+                             { 'status': Status.FETCHING_FAILED, 'id': article.id})
+
+        with self.assertRaises(UnexpectedArticleStatusException):
+            article.update_status(Status.FETCHED)

@@ -4,7 +4,7 @@ from sqlalchemy import Table, text
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean, Numeric
-from sqlalchemy.orm import sessionmaker, relationship
+from sqlalchemy.orm import sessionmaker, relationship, object_session
 
 Base = declarative_base()
 Session = sessionmaker()
@@ -19,10 +19,19 @@ class Status:
     FETCHING_FAILED = 'fetching failed'
     PROCESSING_FAILED = 'prodessing failed'
 
+
 class Category:
     OTHER = 'other'
     DISASTER = 'disaster'
     CONFLICT = 'conflict'
+
+
+class UnexpectedArticleStatusException(Exception):
+    def __init__(self, article, expected, actual):
+        super(UnexpectedArticleStatusException, self).__init__(
+            "Expected article {id} to be in state {expected}, but was in state {actual}".format(
+                id=article.id, expected=expected, actual=actual
+            ))
 
 
 class Article(Base):
@@ -41,6 +50,23 @@ class Article(Base):
     content = relationship('Content', uselist=False, back_populates='article', cascade="all, delete-orphan")
     reports = relationship('Report', back_populates='article', cascade="all, delete-orphan")
     categories = relationship('ArticleCategory', cascade="all, delete-orphan")
+
+    def update_status(self, new_status):
+        """
+        Atomically Update the status of this Article from to new_status.
+        If something changed the status of this article since it was loaded, raise.
+        """
+        session = object_session(self)
+        if not session:
+            raise RuntimeError("Object has not been persisted in a session.")
+
+        expected_status = self.status
+        result = session.query(Article).filter(Article.id == self.id, Article.status == self.status).update({
+            Article.status: new_status
+        })
+        if result != 1:
+            updated = session.query(Article).filter(Article.id == self.id).one()
+            raise UnexpectedArticleStatusException(self, expected_status, updated.status)
 
 
 class ArticleCategory(Base):
