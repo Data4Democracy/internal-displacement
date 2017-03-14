@@ -32,6 +32,8 @@ class UnexpectedArticleStatusException(Exception):
             "Expected article {id} to be in state {expected}, but was in state {actual}".format(
                 id=article.id, expected=expected, actual=actual
             ))
+        self.expected = expected
+        self.actual = actual
 
 
 class Article(Base):
