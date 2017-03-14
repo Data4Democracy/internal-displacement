@@ -23,26 +23,32 @@ def is_pdf_simple_tests(url):
         return url
 
     # Test based on headers
-    page = request.urlopen(url)
-    content_type = page.getheader('Content-Type')
-    if content_type == 'application/pdf':
-        return url
+    try:
+        page = request.urlopen(url)
+        content_type = page.getheader('Content-Type')
+        if content_type == 'application/pdf':
+            return url
+    except urllib.error.HTTPError:
+        pass
 
 
 def is_pdf_iframe_test(url):
     '''Test a url to see if the page contains an iframe
     and if the iframe content is pdf or not; if True, return the pdf url
     '''
-    page = request.urlopen(url)
-    soup = BeautifulSoup(page, "html.parser")
-    iframes = soup.find_all('iframe')
-    if len(iframes) > 0:
-        for frame in iframes:
-            src = frame.attrs['src']
-            # should probably replace with something more robust
-            if 'http' in src:
-                if is_pdf_simple_tests(src):
-                    return src
+    try:
+        page = request.urlopen(url)
+        soup = BeautifulSoup(page, "html.parser")
+        iframes = soup.find_all('iframe')
+        if len(iframes) > 0:
+            for frame in iframes:
+                src = frame.attrs['src']
+                # should probably replace with something more robust
+                if 'http' in src:
+                    if is_pdf_simple_tests(src):
+                        return src
+    except urllib.error.HTTPError:
+        pass
 
 
 def is_pdf_consolidated_test(url):
