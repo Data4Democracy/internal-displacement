@@ -17,7 +17,7 @@ class Status:
     PROCESSING = 'processing'
     PROCESSED = 'processed'
     FETCHING_FAILED = 'fetching failed'
-    PROCESSING_FAILED = 'prodessing failed'
+    PROCESSING_FAILED = 'processing failed'
 
 
 class Category:
