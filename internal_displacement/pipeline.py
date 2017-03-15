@@ -1,13 +1,16 @@
 import csv
-from internal_displacement.scraper import scrape
 from internal_displacement.article import Article
 from internal_displacement.report import Report
 from internal_displacement.interpreter import Interpreter
+from internal_displacement.model.model import Status, Session, Category, Article, Content, Country, CountryTerm, \
+    Location, Report, ReportDateSpan, ArticleCategory, Base
 import concurrent
 from concurrent import futures
 import sqlite3
 import pandas as pd
 import numpy as np
+import json
+from datetime import datetime
 
 
 """
@@ -98,7 +101,6 @@ def urls_from_csv(dataset, column=None, header=1):
     return urls
 
 
-
 def sample_urls(urls, size=0.25, random=True):
     '''Return a subsample of urls
     Parameters
@@ -137,6 +139,98 @@ def sample_urls(urls, size=0.25, random=True):
         return np.random.choice(urls, sample_size)
     else:
         return urls[:sample_size]
+
+
+class Pipeline(object):
+    """
+    Interface for article processing
+    """
+
+    def __init__(self, session, scraper, interpreter):
+        self.session = session
+        self.scraper = scraper
+        self.interpreter = interpreter
+
+    def process_url(self, url):
+        # Create an article
+        article = self.create_article(url)
+        # Attempt to download the url and update article attributes
+        self.fetch_article(article)
+        if article.status == Status.FETCHING_FAILED:
+            return Status.FETCHING_FAILED
+        # Start processing
+        article.update_status(Status.PROCESSING)
+        # Check and update language
+        self.check_language(article)
+        if article.language != 'en':
+            article.update_status(Status.PROCESSED)
+            return "Processed: Not in English"
+        # Try and extract reports
+        self.fetch_reports(article)
+        # Set the relevance status
+        status = len(article.reports) > 0
+        article.relevance = status
+        self.session.commit()
+        if not article.relevance:
+            article.update_status(Status.PROCESSED)
+            return "Processed: Not relevant"
+        # TO DO: call the classifier and set the category
+        article.update_status(Status.PROCESSED)
+        return Status.PROCESSED
+
+    def create_article(self, url):
+        article = Article(url=url, status=Status.NEW)
+        self.session.add(article)
+        self.session.commit()
+        return article
+
+    def fetch_article(self, article):
+        content, publish_date, title, content_type, authors, domain = self.scraper.scrape(
+            article.url)
+        if content == 'retrieval_failed':
+            article.update_status(Status.FETCHING_FAILED)
+        else:
+            self.session.query(Article).filter(Article.id == article.id).\
+                update({"domain": domain, "status": Status.FETCHED, "title": title, "publication_date": publish_date,
+                        "authors": ", ".join(authors)})
+            # Add the article content
+            content = Content(article_id=article.id, retrieval_date=datetime.now(),
+                              content=content, content_type=content_type)
+            self.session.add(content)
+            self.session.commit()
+
+    def check_language(self, article):
+        article.language = self.interpreter.check_language(
+            article.content.content)
+        self.session.commit()
+
+    def fetch_reports(self, article):
+        reports = self.interpreter.process_article_new(article.content.content)
+        if len(reports) == 0:
+            return
+        for report in reports:
+            self.process_report(article, report)
+
+    def process_report(self, article, rep):
+        report = Report(article_id=article.id, event_term=rep.event_term, subject_term=rep.subject_term,
+                        quantity=0, tag_locations=json.dumps(rep.tag_spans),
+                        analysis_date=datetime.now())
+        self.session.add(report)
+        self.session.commit()
+
+        for location in rep.locations:
+            self.process_location(report, location)
+
+    def process_location(self, report, location):
+        country_code = self.interpreter.country_code(location)
+        if country_code:
+            country = self.session.query(Country).filter_by(code=country_code).one_or_none() or Country(code=country_code)
+            self.session.add(country)
+            self.session.commit()
+            location = Location(description=location, country=country)
+            self.session.add(location)
+            self.session.commit()
+            report.locations.append(location)
 
 
 class SQLArticleInterface(object):
@@ -187,7 +281,7 @@ class SQLArticleInterface(object):
         except Exception as e:
             print("Exception: {}".format(e))
 
-        # Insert reports 
+        # Insert reports
         # Note: This may need to modify to work with sqlalchemy
         if len(reports) == 0:
             # If no reports, article is not relevant
@@ -227,19 +321,19 @@ class SQLArticleInterface(object):
         try:
             self.sql_cursor.execute('''
             INSERT INTO REPORT VALUES (?,?,?,?,?,?,?,?,)''',
-            (report.story, report.event_term, report.subject_term, report.quantity, 
-                report.tag_spans, report.accuracy, report.analyzer, report.analysis_date))
+                                    (report.story, report.event_term, report.subject_term, report.quantity,
+                                     report.tag_spans, report.accuracy, report.analyzer, report.analysis_date))
 
             for loc in report.locations:
                 self.sql_cursor.execute('''
                 INSERT INTO REPORT_LOCATION VALUES (?,?)''',
-                (report, loc))
+                                        (report, loc))
 
             for date_time in report.date_times:
                 # (@domingohui Mar 9 2017) Need to revise how date spans work in Report
                 self.sql_cursor.execute('''
                 INSERT INTO REPORT_DATESPAN VALUES (?,?)''',
-                (report, date_time))
+                                        (report, date_time))
 
         except Exception as e:
             print("Exception: {}".format(e))
@@ -261,9 +355,10 @@ class SQLArticleInterface(object):
 
         article_futures = []
         with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-            interpreter = None # To be initialized later
+            interpreter = None  # To be initialized later
             for url in urls:
-                article_futures.append(executor.submit(scrape, url, scrape_pdfs))
+                article_futures.append(
+                    executor.submit(scrape, url, scrape_pdfs))
             for f in concurrent.futures.as_completed(article_futures):
                 try:
                     article = f.result()
@@ -277,9 +372,11 @@ class SQLArticleInterface(object):
                         # Obtain langugae of the article
                         article.language = interpreter.check_language(article)
                         # Obtain reports of the article
-                        article.reports = interpreter.process_article_new(article)
+                        article.reports = interpreter.process_article_new(
+                            article)
                         # Obtain codes of countries related to the article
-                        article.country_codes = interpreter.extract_countries(article)
+                        article.country_codes = interpreter.extract_countries(
+                            article)
 
                         self.insert_article(article)
                 except Exception as e:
@@ -312,7 +409,8 @@ class SQLArticleInterface(object):
         """
         try:
             data = self.sql_cursor.execute("SELECT * FROM " + table)
-            headers = cursor = list(map(lambda x: x[0], self.sql_cursor.description))
+            headers = cursor = list(
+                map(lambda x: x[0], self.sql_cursor.description))
         except ValueError:
             print("Not a valid table.")
         with open(output, 'w') as f:

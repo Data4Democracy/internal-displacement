@@ -165,4 +165,4 @@ def init_db(db_url, i_know_this_will_delete_everything=False):
     sql_path = os.path.join(os.path.dirname(__file__), 'schema.sql')
     with open(sql_path, 'r') as schema:
         session.execute(text(schema.read()))
-session.commit()
+    session.commit()
