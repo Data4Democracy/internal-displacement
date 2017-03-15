@@ -418,7 +418,7 @@ class Interpreter():
         Examines a sentence and identifies if any of its constituent tokens describe a date.
         If a root token is specified, only date tokens below the level of this token in the tree will be examined.
         If no root is specified, date tokens will be drawn from the entirety of the span.
-        Unlike the extract dates function (which returns a list of strings),
+        Unlike the extract_locations function (which returns a list of strings),
         this function returns a list of spacy spans. This is because numerical quantities detected in the
         branch_search need to be checked to ensure they are not in fact parts of a date.
 
@@ -454,13 +454,28 @@ class Interpreter():
             return None
 
     def date_likelihood(self, possible_dates, story):
+        '''
+        Excludes dates that are unlikely to represent the event date in the story.
+
+        Parameters
+        ----------
+        possible_dates:     a list of Spacey tokens that represent dates
+        story:              a string - text of an article
+
+        Returns
+        -------
+        A list of date tokens that likely represent the dates of events in the story
+        '''
+
         likely_dates = possible_dates.copy()
         # One rule could look at the year of the date
         # i.e. if the year is x years ago, then not likely
+        year_pattern = re.compile(r'(\s|^)(\d{4})([\s\.,;:]|$)')
         for date_token in likely_dates:
-            if re.search(r'(\s|^)(\d{4})([\s\.,;:]|$)', date_token.text):
-                year = int(
-                    re.search(r'(\s|^)(\d{4})([\s\.,;:]|$)', date_token.text).groups()[1])
+            year_regex_result = year_pattern.search(date_token.text)
+            if year_regex_result:
+                # Year is the second item of the regex 
+                year = int(year_regex_result.groups()[1])
                 if year < 2016:
                     likely_dates.remove(date_token)
 
