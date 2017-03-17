@@ -6,8 +6,10 @@ import os
 import textacy
 import unicodedata
 import urllib.request
+from sklearn.externals import joblib
 from internal_displacement.report import Report
 from internal_displacement.fact import Fact
+from internal_displacement.article import Article
 
 
 def strip_accents(s):
@@ -132,6 +134,28 @@ class Interpreter():
         '''
         if len(article.reports) > 0:
             article.relevance = True
+
+    def categorize(self, article, model=None):
+        ''' Classify article as concerning conflict and violence,
+        disaster, or other.
+        Parameters
+        ----------
+        article:        the content of the article:String
+        model: A pickled scikit-learn classification model.
+               If None then default model is used.
+
+        Returns
+        -------
+        category: 
+        '''
+        # if a model is specified use it, otherwise load default trained model
+        if model:
+            clf = joblib.load(model)
+        else:
+            clf = joblib.load('../classifiers/default_model.pkl')
+        category = clf.predict(article)
+        return category
+
 
     def country_code(self, place_name):
         '''Find the ISO-3166 alpha_2 country code
