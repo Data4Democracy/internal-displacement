@@ -6,8 +6,10 @@ import os
 import textacy
 import unicodedata
 import urllib.request
-from internal_displacement.report import Report
-from internal_displacement.fact import Fact
+import parsedatetime
+from datetime import datetime
+from internal_displacement.extracted_report import ExtractedReport
+from internal_displacement.extracted_report import Fact
 
 
 def strip_accents(s):
@@ -37,7 +39,7 @@ def strip_words(place_name):
 def mapzen_request(place_name):
     key = 'mapzen-i8JEmx7'
     base_url = 'https://search.mapzen.com/v1/search'
-    qry = { 'text': place_name, 'api_key': key }
+    qry = {'text': place_name, 'api_key': key}
     url = "{}?{}".format(base_url, urllib.parse.urlencode(qry))
     res = urllib.request.urlopen(url)
     res_body = res.read()
@@ -94,7 +96,17 @@ def match_country_name(place_name):
                 break
 
 
+def get_absolute_date(date_string):
+    """Turn relative dates into absolute datetimes.
+    Place-holder function
+    """
+    cal = parsedatetime.Calendar()
+    time_struct, parse_status = cal.parse(date_string)
+    return datetime(*time_struct[:6])
+
+
 class Interpreter():
+
     def __init__(self, nlp, person_reporting_terms, structure_reporting_terms, person_reporting_units,
                  structure_reporting_units, relevant_article_lemmas, data_path='../data'):
         self.nlp = nlp
@@ -104,7 +116,8 @@ class Interpreter():
             " ".join(person_reporting_terms))]
         self.structure_term_lemmas = [t.lemma_ for t in self.nlp(
             " ".join(structure_reporting_terms))]
-        self.joint_term_lemmas = list(set(self.structure_term_lemmas) & set(self.person_term_lemmas))
+        self.joint_term_lemmas = list(
+            set(self.structure_term_lemmas) & set(self.person_term_lemmas))
         self.person_unit_lemmas = [t.lemma_ for t in self.nlp(
             " ".join(person_reporting_units))]
         self.structure_unit_lemmas = [t.lemma_ for t in self.nlp(
@@ -146,7 +159,8 @@ class Interpreter():
         if country_from_province:
             return country_from_province
         # Try getting the country code using a city name
-        country_code = self.cities_to_countries.get(strip_accents(place_name), None)
+        country_code = self.cities_to_countries.get(
+            strip_accents(place_name), None)
         if country_code:
             return pycountry.countries.get(alpha_2=country_code).alpha_3
         return None
@@ -308,9 +322,11 @@ class Interpreter():
         facts = []
         for fact in fact_array:
             if isinstance(fact, spacy.tokens.token.Token):
-                facts.append(Fact(fact, fact, fact.lemma_, fact_type, start_offset))
+                facts.append(Fact(fact, fact, fact.lemma_,
+                                  fact_type, start_offset))
             elif isinstance(fact, spacy.tokens.span.Span):
-                facts.append(Fact(fact[0], fact, fact.lemma_, fact_type, start_offset))
+                facts.append(
+                    Fact(fact[0], fact, fact.lemma_, fact_type, start_offset))
         return facts
 
     def extract_locations(self, sentence, root=None):
@@ -342,7 +358,8 @@ class Interpreter():
             if len(block_locations) > 0:
                 return self.convert_to_facts(block_locations, "loc", sentence[0].idx)
             else:
-                return self.convert_to_facts(location_entities, "loc", sentence[0].idx) # If we cannot decide which one is correct, choose them all
+                # If we cannot decide which one is correct, choose them all
+                return self.convert_to_facts(location_entities, "loc", sentence[0].idx)
                 # and figure it out at the report merging stage.
         elif len(location_entities) == 1:
             return self.convert_to_facts(location_entities, "loc", sentence[0].idx)
@@ -378,7 +395,7 @@ class Interpreter():
 
             block_dates = self.match_entities_in_block(
                 date_entities, contiguous_token_block)
-            
+
             likely_block_dates = self.date_likelihood(block_dates, story)
             if likely_block_dates:
                 return self.convert_to_facts(likely_block_dates, "date", sentence[0].idx)
@@ -395,10 +412,11 @@ class Interpreter():
         # i.e. if the year is x years ago, then not likely
         for date_token in likely_dates:
             if re.search(r'(\s|^)(\d{4})([\s\.,;:]|$)', date_token.text):
-                year = int(re.search(r'(\s|^)(\d{4})([\s\.,;:]|$)', date_token.text).groups()[1])
+                year = int(
+                    re.search(r'(\s|^)(\d{4})([\s\.,;:]|$)', date_token.text).groups()[1])
                 if year < 2016:
                     likely_dates.remove(date_token)
-        
+
         # One rule could look at the word preceding the date
         # i.e. since last year, next Tuesday
         for date_token in likely_dates:
@@ -406,7 +424,7 @@ class Interpreter():
                 previous_word = story[date_token[0].i - 1]
                 if previous_word.text in ('since', 'next'):
                     likely_dates.remove(date_token)
-        
+
         if len(likely_dates) > 0:
             return likely_dates
 
@@ -461,10 +479,10 @@ class Interpreter():
                     obj_predicate = child
             if obj_predicate:
                 if obj_predicate.lemma_ in self.structure_term_lemmas:
-                    return self.structure_unit_lemmas, Fact(verb, article[verb.i : obj_predicate.i + 1], 'leave ' + obj_predicate.lemma_, "term")
+                    return self.structure_unit_lemmas, Fact(verb, article[verb.i: obj_predicate.i + 1], 'leave ' + obj_predicate.lemma_, "term")
 
                 elif obj_predicate.lemma_ in self.person_term_lemmas:
-                    return self.person_unit_lemmas, Fact(verb, article[verb.i : obj_predicate.i + 1], 'leave ' + obj_predicate.lemma_, "term")
+                    return self.person_unit_lemmas, Fact(verb, article[verb.i: obj_predicate.i + 1], 'leave ' + obj_predicate.lemma_, "term")
 
         elif verb.lemma_ == 'affect' and self.article_relevance(article):
             return self.structure_unit_lemmas + self.person_unit_lemmas, Fact(verb, verb, verb.lemma_, "term")
@@ -474,16 +492,16 @@ class Interpreter():
             if verb_objects:
                 verb_object = verb_objects[0]
                 if verb_object.lemma_ in self.person_term_lemmas:
-                    return self.person_unit_lemmas, Fact(verb, article[verb.i : verb_object.i + 1], verb.lemma_ + " " + verb_object.text, "term")
+                    return self.person_unit_lemmas, Fact(verb, article[verb.i: verb_object.i + 1], verb.lemma_ + " " + verb_object.text, "term")
 
                 elif verb_object.lemma_ in self.structure_term_lemmas:
-                    return self.structure_unit_lemmas, Fact(verb, article[verb.i : verb_object.i + 1], verb.lemma_ + " " + verb_object.text, "term")
+                    return self.structure_unit_lemmas, Fact(verb, article[verb.i: verb_object.i + 1], verb.lemma_ + " " + verb_object.text, "term")
 
         elif verb.lemma_ == 'claim':
             verb_objects = textacy.spacy_utils.get_objects_of_verb(verb)
             for verb_object in verb_objects:
                 if verb_object.text == 'lives':
-                    return self.person_unit_lemmas, Fact(verb, article[verb.i : verb_object.i + 1], verb.lemma_ + " " + "lives", "term")
+                    return self.person_unit_lemmas, Fact(verb, article[verb.i: verb_object.i + 1], verb.lemma_ + " " + "lives", "term")
 
         return None, None
 
@@ -605,14 +623,15 @@ class Interpreter():
             if isinstance(f, list):
                 sub_spans = self.set_report_span(f)
                 report_span.extend(sub_spans)
-            elif f.token: # Make sure that the fact is not None (specifically for the case of Quantities)
+            # Make sure that the fact is not None (specifically for the case of
+            # Quantities)
+            elif f.token:
                 span = {}
                 span['type'] = f.type_
                 span['start'] = f.start_idx
                 span['end'] = f.end_idx
                 report_span.append(span)
         return report_span
-
 
     def branch_search_new(self, verb, search_type, dates_memory, locations_memory, sentence, story):
         """
@@ -630,7 +649,8 @@ class Interpreter():
             possible_dates = dates_memory
         reports = []
         quantity = Fact(None)
-        verb_objects = self.get_subjects_and_objects(story, sentence, verb.token)
+        verb_objects = self.get_subjects_and_objects(
+            story, sentence, verb.token)
         # If there are multiple possible nouns and it is unclear which is the correct one
         # choose the one with the fewest descendents. A verb object with many descendents is more likely to
         # have its own verb as a descendent.
@@ -641,7 +661,8 @@ class Interpreter():
         for o in verb_objects:
             if self.basic_number(o):
                 # Test if the following word is either the verb in question
-                # Or if it is of the construction 'leave ____', then ____ is the following word
+                # Or if it is of the construction 'leave ____', then ____ is
+                # the following word
                 next_word = self.next_word(story, o)
                 if next_word and (next_word.i == verb.token.i or next_word.text == verb.lemma_.split(" ")[-1]):
                     if search_type == self.structure_term_lemmas:
@@ -649,9 +670,10 @@ class Interpreter():
                     else:
                         unit = 'person'
                     quantity = Fact(o, o, o.lemma_, 'quantity')
-                    report = Report([p.text for p in possible_locations], [p.text for p in possible_dates], verb.lemma_,
+                    report = ExtractedReport([p.text for p in possible_locations], [get_absolute_date(p.text) for p in possible_dates], verb.lemma_,
                                     unit, quantity, story.text)
-                    report.tag_spans = self.set_report_span([verb, quantity, possible_locations, possible_dates])
+                    report.tag_spans = self.set_report_span(
+                        [verb, quantity, possible_locations, possible_dates])
                     # report.display()
                     reports.append(report)
                     break
@@ -660,16 +682,19 @@ class Interpreter():
                 noun_conj = self.test_noun_conj(sentence, o)
                 if noun_conj:
                     reporting_unit = noun_conj
-                    # Try and get a number - begin search from noun conjunction root.
+                    # Try and get a number - begin search from noun conjunction
+                    # root.
                     quantity = self.get_quantity(sentence, reporting_unit.root)
                 else:
                     # Try and get a number - begin search from noun.
                     quantity = self.get_quantity(sentence, o)
 
-                reporting_unit = Fact(reporting_unit, reporting_unit, reporting_unit.lemma_, "unit")
-                report = Report([p.text for p in possible_locations], [p.text for p in possible_dates], verb.lemma_,
+                reporting_unit = Fact(
+                    reporting_unit, reporting_unit, reporting_unit.lemma_, "unit")
+                report = ExtractedReport([p.text for p in possible_locations], [get_absolute_date(p.text) for p in possible_dates], verb.lemma_,
                                 reporting_unit.lemma_, quantity, story.text)
-                report.tag_spans = self.set_report_span([verb, quantity, reporting_unit, possible_locations, possible_dates])
+                report.tag_spans = self.set_report_span(
+                    [verb, quantity, reporting_unit, possible_locations, possible_dates])
                 reports.append(report)
                 # report.display()
                 break

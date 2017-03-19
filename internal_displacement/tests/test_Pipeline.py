@@ -44,8 +44,8 @@ class TestPipeline(TestCase):
 
     def setUp(self):
         db_host = os.environ.get('DB_HOST')
-        db_url = 'postgresql://{user}:{passwd}@{db_host}/{db}'.format(
-           user='tester', passwd='tester', db_host=db_host, db='id_test')
+        db_url = 'postgresql://{user}:{password}@{db_host}/{db}'.format(
+            user='tester', password='tester', db_host=db_host, db='id_test')
         engine = create_engine(db_url)
         Session.configure(bind=engine)
         session = Session()
@@ -54,11 +54,19 @@ class TestPipeline(TestCase):
                                   person_reporting_units, structure_reporting_units, relevant_article_lemmas, 'data/')
         self.pipeline = Pipeline(session, scraper, interpreter)
         self.session = session
+        # Add two countries
+        for c in ['AFG', 'PAK']:
+            country = Country(code=c)
+            self.session.add(country)
+            self.session.commit()
 
     def tearDown(self):
         self.session.rollback()
         for url in test_urls:
             self.session.query(Article).filter_by(url=url).delete()
+        self.session.commit()
+        for c in ['AFG', 'PAK']:
+            self.session.query(Country).filter_by(code=c).delete()
         self.session.commit()
 
     def test_bad_url(self):
@@ -101,3 +109,15 @@ class TestPipeline(TestCase):
         units = [report.subject_term for report in article.reports]
         self.assertIn('villager', units)
         self.assertIn('house', units)
+
+    def test_existing_location(self):
+        article = Article(url='test-url')
+        self.session.add(article)
+        report = Report(article_id=article.id)
+        self.session.add(report)
+        location = Location(code='AFG', description='somelocation')
+        self.session.add(location)
+        self.session.commit()
+        original_id = location.id
+        self.pipeline.process_location(report, 'somelocation')
+        self.assertEqual(original_id, report.locations[0].id)

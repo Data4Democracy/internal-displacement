@@ -3,7 +3,6 @@ import csv
 import urllib
 from urllib import request
 from urllib.parse import urlparse
-from internal_displacement.article import Article
 import textract
 import os
 from collections import OrderedDict

@@ -1,6 +1,4 @@
 import csv
-from internal_displacement.article import Article
-from internal_displacement.report import Report
 from internal_displacement.interpreter import Interpreter
 from internal_displacement.model.model import Status, Session, Category, Article, Content, Country, CountryTerm, \
     Location, Report, ReportDateSpan, ArticleCategory, Base
@@ -179,12 +177,17 @@ class Pipeline(object):
         return Status.PROCESSED
 
     def create_article(self, url):
+        '''Create an article from a provided url.
+        '''
         article = Article(url=url, status=Status.NEW)
         self.session.add(article)
         self.session.commit()
         return article
 
     def fetch_article(self, article):
+        '''Attempt to download and parse article.
+        Update status and add content to database (if successful).
+        '''
         content, publish_date, title, content_type, authors, domain = self.scraper.scrape(
             article.url)
         if content == 'retrieval_failed':
@@ -200,11 +203,15 @@ class Pipeline(object):
             self.session.commit()
 
     def check_language(self, article):
+        '''Check article language and update attribute.
+        '''
         article.language = self.interpreter.check_language(
             article.content.content)
         self.session.commit()
 
     def fetch_reports(self, article):
+        '''Fetch reports for a given article.
+        '''
         reports = self.interpreter.process_article_new(article.content.content)
         if len(reports) == 0:
             return
@@ -212,8 +219,12 @@ class Pipeline(object):
             self.process_report(article, report)
 
     def process_report(self, article, rep):
+        '''Create Reports for each extracted report.
+        Add locations and date-spans.
+        '''
         report = Report(article_id=article.id, event_term=rep.event_term, subject_term=rep.subject_term,
-                        quantity=0, tag_locations=json.dumps(rep.tag_spans),
+                        quantity=rep.quantity, tag_locations=json.dumps(
+                            rep.tag_spans),
                         analysis_date=datetime.now())
         self.session.add(report)
         self.session.commit()
@@ -221,16 +232,39 @@ class Pipeline(object):
         for location in rep.locations:
             self.process_location(report, location)
 
+        self.process_dates(report, rep.date_times)
+
     def process_location(self, report, location):
-        country_code = self.interpreter.country_code(location)
-        if country_code:
-            country = self.session.query(Country).filter_by(code=country_code).one_or_none() or Country(code=country_code)
-            self.session.add(country)
+        '''Process each location.
+        If location already exists, use existing location.
+        Otherwise create new location.
+        '''
+        loc = self.session.query(Location).filter_by(description=location).one_or_none()
+        if loc:
+            report.locations.append(loc)
+        else:
+            country_code = self.interpreter.country_code(location)
+            if country_code:
+                country = self.session.query(Country).filter_by(
+                    code=country_code).one_or_none()
+                location = Location(description=location, country=country)
+                self.session.add(location)
+                self.session.commit()
+                report.locations.append(location)
+
+    def process_dates(self, report, date_times):
+        '''Create datespan from extracted dates.
+        Start = Minimum extracted datetime
+        End = Maximum extracted datetime
+        '''
+        if len(date_times) > 0:
+            start = min(date_times)
+            finish = max(date_times)
+            date_span = ReportDateSpan(
+                report_id=report.id, start=start, finish=finish)
+            self.session.add(date_span)
             self.session.commit()
-            location = Location(description=location, country=country)
-            self.session.add(location)
-            self.session.commit()
-            report.locations.append(location)
+            report.datespans.append(date_span)
 
 
 class SQLArticleInterface(object):
