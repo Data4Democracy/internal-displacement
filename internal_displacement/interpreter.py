@@ -10,6 +10,7 @@ from sklearn.externals import joblib
 from internal_displacement.report import Report
 from internal_displacement.fact import Fact
 from internal_displacement.article import Article
+from internal_displacement.model.model import Category
 
 
 def strip_accents(s):
@@ -135,7 +136,7 @@ class Interpreter():
         if len(article.reports) > 0:
             article.relevance = True
 
-    def categorize(self, article, model=None):
+    def classify_category(self, article, text='content', model=None):
         ''' Classify article as concerning conflict and violence,
         disaster, or other.
         Parameters
@@ -154,7 +155,12 @@ class Interpreter():
         else:
             clf = joblib.load('../classifiers/default_model.pkl')
         category = clf.predict(article)
-        return category
+        if category == 'disaster':
+            return Category.DISASTER
+        elif category == 'conflict':
+            return Category.conflict
+        else:
+            return Category.OTHER
 
 
     def country_code(self, place_name):
