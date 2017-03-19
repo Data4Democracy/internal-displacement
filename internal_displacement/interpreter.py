@@ -158,7 +158,7 @@ class Interpreter():
         if category == 'disaster':
             return Category.DISASTER
         elif category == 'conflict':
-            return Category.conflict
+            return Category.CONFLICT
         else:
             return Category.OTHER
 
