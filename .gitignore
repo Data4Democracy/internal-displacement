@@ -1,8 +1,12 @@
 *.csv
 *.pyc
+*.sqlite
+*.pdf
+
 notebooks/test.ipynb
 notebooks/.ipynb_checkpoints/*.ipynb
 .ipynb_checkpoints/*.ipynb
 id-tests.ipynb
-*.sqlite
-*.pdf
+
+classifiers/default_model.pkl
+
