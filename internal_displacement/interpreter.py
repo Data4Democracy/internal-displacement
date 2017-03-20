@@ -5,6 +5,7 @@ import spacy
 import os
 import textacy
 import unicodedata
+import requests
 import urllib.request
 from sklearn.externals import joblib
 from internal_displacement.report import Report
