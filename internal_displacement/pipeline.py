@@ -209,6 +209,17 @@ class Pipeline(object):
             article.content.content)
         self.session.commit()
 
+    def categorize(self, article, text='content'):
+        if text == 'content':
+            category = self.interpreter.classify_category(
+                article.content.content, text=text)
+        elif text == 'title':
+            category = self.interpreter.classify_category(
+                article.title, text=text)
+        category = ArticleCategory(category=category)
+        self.session.add(category)
+        self.session.commit()
+
     def fetch_reports(self, article):
         '''Fetch reports for a given article.
         '''
