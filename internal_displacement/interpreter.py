@@ -122,7 +122,17 @@ class Interpreter():
         if model:
             clf = joblib.load(model)
         else:
-            clf = joblib.load('../classifiers/default_model.pkl')
+            default_path = '../classifiers/default_model.pkl'
+            if os.path.isfile(default_path):
+                clf = joblib.load(default_path)
+            else:
+                url = 'https://www.dropbox.com/s/i2zb5uq4foocht4/default_model.pkl?dl=0'
+                r = requests.get(url, stream=True)
+                with open(default_path, 'wb') as f:
+                    for chunk in r.iter_content(chunk_size=1024): 
+                        if chunk: # filter out keep-alive new chunks
+                            f.write(chunk)
+            clf = joblib.load(default_path)
         return clf
 
     def check_language(self, article):
