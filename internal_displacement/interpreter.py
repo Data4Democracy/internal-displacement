@@ -5,9 +5,13 @@ import spacy
 import os
 import textacy
 import unicodedata
+import requests
 import urllib.request
+from sklearn.externals import joblib
 from internal_displacement.report import Report
 from internal_displacement.fact import Fact
+from internal_displacement.article import Article
+from internal_displacement.model.model import Category
 
 
 def strip_accents(s):
@@ -112,6 +116,25 @@ class Interpreter():
         self.reporting_term_lemmas = self.person_term_lemmas + self.structure_term_lemmas
         self.reporting_unit_lemmas = self.person_unit_lemmas + self.structure_unit_lemmas
         self.relevant_article_lemmas = relevant_article_lemmas
+        self.classifier = self.load_classifier()
+        self.encoder = joblib.load('../classifiers/default_encoder.pkl')
+
+    def load_classifier(self, model=None):
+        if model:
+            clf = joblib.load(model)
+        else:
+            default_path = '../classifiers/default_model.pkl'
+            if os.path.isfile(default_path):
+                clf = joblib.load(default_path)
+            else:
+                url = 'https://www.dropbox.com/s/i2zb5uq4foocht4/default_model.pkl?dl=0'
+                r = requests.get(url, stream=True)
+                with open(default_path, 'wb') as f:
+                    for chunk in r.iter_content(chunk_size=1024): 
+                        if chunk: # filter out keep-alive new chunks
+                            f.write(chunk)
+            clf = joblib.load(default_path)
+        return clf
 
     def check_language(self, article):
         '''Identify the language of the article content
@@ -132,6 +155,30 @@ class Interpreter():
         '''
         if len(article.reports) > 0:
             article.relevance = True
+
+    def classify_category(self, article, text='content', model=None):
+        ''' Classify article as concerning conflict and violence,
+        disaster, or other.
+        Parameters
+        ----------
+        article:        the content of the article:String
+        model: A pickled scikit-learn classification model.
+               If None then default model is used.
+
+        Returns
+        -------
+        category: 
+        '''
+        # if a model is specified use it, otherwise load default trained model
+        label = self.classifier(article)
+        category = self.encoder.inverse_transform(label)
+        if category == 'disaster':
+            return Category.DISASTER
+        elif category == 'conflict':
+            return Category.CONFLICT
+        else:
+            return Category.OTHER
+
 
     def country_code(self, place_name):
         '''Find the ISO-3166 alpha_2 country code
