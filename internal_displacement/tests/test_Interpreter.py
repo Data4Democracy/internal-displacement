@@ -82,4 +82,4 @@ class TestInterpreter(TestCase):
         disaster = self.interpreter.classify_category(disaster_article)
         conflict = self.interpreter.classify_category(conflict_article)
         self.assertEqual(disaster, Category.DISASTER)
-        self.assertEqual(disaster, Category.CONFLICT)
+        self.assertEqual(conflict, Category.CONFLICT)
