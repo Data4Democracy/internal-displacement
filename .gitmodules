@@ -1,0 +1,4 @@
+[submodule "internal-displacement-web"]
+	path = internal-displacement-web
+	url = git@github.com:Data4Democracy/internal-displacement-web.git
+	branch = master

@@ -5,14 +5,25 @@ services:
     image: localdb
   jupyter:
     build: .
-    image: internal_displacement
-    command: sh -c "jupyter notebook --no-browser --ip=0.0.0.0 /project/notebooks"
+    image: internal-displacement
+    command: sh -c "jupyter notebook --no-browser --ip=0.0.0.0 /internal-displacement/notebooks"
     env_file: docker.env
     stdin_open: true
     tty: true
     volumes:
-      - .:/project
+      - .:/internal-displacement
     ports:
       - "8888:8888"
+    depends_on:
+      - localdb
+  nodejs:
+    build: internal-displacement-web
+    image: internal-displacement-web
+    volumes:
+      - ./internal-displacement-web/src:/internal-displacement-web/src
+      - ./internal-displacement-web/package.json:/internal-displacement-web/package.json
+      - ./internal-displacement-web/index.html:/internal-displacement-web/index.html
+    ports:
+      - "3000:80"
     depends_on:
       - localdb

@@ -86,6 +86,12 @@ be installed in a controlled, reproducible way.
 
 1. Install Docker: https://www.docker.com/products/overview
 
+2. Pull in the web interface as a submodule...
+   ```
+   git submodule update --init --recursive .
+
+   ```
+
 2. Run this command:
 
    ```
@@ -109,10 +115,12 @@ be installed in a controlled, reproducible way.
 [InitDB.ipynb](http://0.0.0.0:8888/notebooks/InitDB.ipynb) notebook.
 
 
+4. Visit the node.js server at [http://localhost:3000](http://localhost:3000)
+
 Note: You can stop the docker containers using Ctrl-C.
 
-Note: If you already have something running on port 8888, edit `docker-compose.yml` and change the *first* 8888
-in the ports config to a free port on your system. eg. for 9999, make it:
+Note: If you already have something running on port 8888 or 3000, edit `docker-compose.yml` and change the first
+number in the ports config to a free port on your system. eg. for 9999, make it:
 ```
     ports:
       - "9999:8888"
