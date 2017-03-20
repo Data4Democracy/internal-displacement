@@ -1,6 +1,7 @@
 from unittest import TestCase
 from internal_displacement.interpreter import strip_words, Interpreter
 from internal_displacement.article import Article
+from internal_displacement.model.model import Category
 from langdetect import detect
 import pycountry
 import spacy
@@ -72,3 +73,13 @@ class TestInterpreter(TestCase):
         countries = self.interpreter.extract_countries(test_article)
         self.assertIsInstance(countries, list)
         self.assertEqual(len(countries), 0)
+
+    def test_classify_category(self):
+        disaster_article = Article("Flooding destroyed the village.", self.date, "test_title", "test_content_type", [
+                                   "test_author_1", "test_author_2"], "www.butts.com", "www.butts.com/disasters")
+        conflict_article = Article("Fighting destroyed the village.", self.date, "test_title", "test_content_type", [
+                                   "test_author_1", "test_author_2"], "www.butts.com", "www.butts.com/disasters")
+        disaster = self.interpreter.classify_category(disaster_article)
+        conflict = self.interpreter.classify_category(conflict_article)
+        self.assertEqual(disaster, Category.DISASTER)
+        self.assertEqual(disaster, Category.CONFLICT)
