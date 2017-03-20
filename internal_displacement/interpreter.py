@@ -115,6 +115,15 @@ class Interpreter():
         self.reporting_term_lemmas = self.person_term_lemmas + self.structure_term_lemmas
         self.reporting_unit_lemmas = self.person_unit_lemmas + self.structure_unit_lemmas
         self.relevant_article_lemmas = relevant_article_lemmas
+        self.classifier = self.load_classifier()
+        self.encoder = joblib.load('../classifiers/default_encoder.pkl')
+
+    def load_classifier(self, model=None):
+        if model:
+            clf = joblib.load(model)
+        else:
+            clf = joblib.load('../classifiers/default_model.pkl')
+        return clf
 
     def check_language(self, article):
         '''Identify the language of the article content
@@ -150,11 +159,8 @@ class Interpreter():
         category: 
         '''
         # if a model is specified use it, otherwise load default trained model
-        if model:
-            clf = joblib.load(model)
-        else:
-            clf = joblib.load('../classifiers/default_model.pkl')
-        category = clf.predict(article)
+        label = self.classifier(article)
+        category = self.encoder.inverse_transform(label)
         if category == 'disaster':
             return Category.DISASTER
         elif category == 'conflict':

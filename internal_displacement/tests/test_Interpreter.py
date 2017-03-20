@@ -75,9 +75,9 @@ class TestInterpreter(TestCase):
         self.assertEqual(len(countries), 0)
 
     def test_classify_category(self):
-        disaster_article = Article("Flooding destroyed the village.", self.date, "test_title", "test_content_type", [
+        disaster_article = Article("Afghanistan – Flash Floods in Faryab and Baghlan Leave 8 Dead", self.date, "test_title", "test_content_type", [
                                    "test_author_1", "test_author_2"], "www.butts.com", "www.butts.com/disasters")
-        conflict_article = Article("Fighting destroyed the village.", self.date, "test_title", "test_content_type", [
+        conflict_article = Article("INSIGHT-India-Pakistan clashes escalate into a humanitarian tragedy", self.date, "test_title", "test_content_type", [
                                    "test_author_1", "test_author_2"], "www.butts.com", "www.butts.com/disasters")
         disaster = self.interpreter.classify_category(disaster_article)
         conflict = self.interpreter.classify_category(conflict_article)
