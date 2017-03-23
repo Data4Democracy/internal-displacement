@@ -716,7 +716,7 @@ class Interpreter():
 
         if not possible_locations:
             possible_locations = locations_memory
-        if (not possible_dates) and publication_date is not None:
+        if not possible_dates and publication_date is not None:
             possible_dates = [publication_date]
         reports = []
         quantity = Fact(None)
