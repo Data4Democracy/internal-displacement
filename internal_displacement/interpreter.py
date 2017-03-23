@@ -112,7 +112,8 @@ def get_absolute_date(date_string):
 class Interpreter():
 
     def __init__(self, nlp, person_reporting_terms, structure_reporting_terms, person_reporting_units,
-                 structure_reporting_units, relevant_article_lemmas, data_path='../data'):
+                 structure_reporting_units, relevant_article_lemmas, data_path='../data', model_path=None, 
+                 encoder_path=None):
         self.nlp = nlp
         with open(os.path.join(data_path, 'cities_to_countries.json'), "r") as f:
             self.cities_to_countries = json.load(f)
@@ -129,25 +130,34 @@ class Interpreter():
         self.reporting_term_lemmas = self.person_term_lemmas + self.structure_term_lemmas
         self.reporting_unit_lemmas = self.person_unit_lemmas + self.structure_unit_lemmas
         self.relevant_article_lemmas = relevant_article_lemmas
-        self.classifier = self.load_classifier()
-        self.encoder = joblib.load('../classifiers/default_encoder.pkl')
+        self.model_path = model_path
+        self.classifier = self.load_classifier(model_path=model_path)
+        self.encoder = self.load_encoder(encoder_path=encoder_path)
 
-    def load_classifier(self, model=None):
-        if model:
-            clf = joblib.load(model)
+    def load_classifier(self, model_path=None):
+        if model_path:
+                clf = joblib.load(model_path)
         else:
-            default_path = '../classifiers/default_model.pkl'
-            if os.path.isfile(default_path):
-                clf = joblib.load(default_path)
+            default_model_path = '../classifiers/default_model.pkl'
+            if os.path.isfile(default_model_path):
+                clf = joblib.load(default_model_path)
             else:
                 url = 'https://www.dropbox.com/s/i2zb5uq4foocht4/default_model.pkl?dl=0'
                 r = requests.get(url, stream=True)
-                with open(default_path, 'wb') as f:
+                with open(default_model_path, 'wb') as f:
                     for chunk in r.iter_content(chunk_size=1024): 
                         if chunk: # filter out keep-alive new chunks
                             f.write(chunk)
-            clf = joblib.load(default_path)
+            clf = joblib.load(default_model_path)
         return clf
+
+    def load_encoder(self, encoder_path=None):
+        if encoder_path:
+            enc = joblib.load(encoder_path)
+        else:
+            default_encoder_path = '../classifiers/default_encoder.pkl'
+            enc = joblib.load(default_encoder_path)
+        return enc
 
     def check_language(self, article):
         '''Identify the language of the article content
