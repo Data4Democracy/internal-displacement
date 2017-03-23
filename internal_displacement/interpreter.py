@@ -433,9 +433,14 @@ class Interpreter():
         this function returns a list of spacy spans. This is because numerical quantities detected in the
         branch_search need to be checked to ensure they are not in fact parts of a date.
 
-        param: sentence             a span
-        param: root                 a token
-        returns: A list of datetime
+        Parameters:
+        -----------
+        sentence             a span
+        root                 a token
+
+        Returns:
+        --------
+        A list of datetime's
         """
         if not root:
             root = sentence.root
