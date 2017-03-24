@@ -86,12 +86,6 @@ be installed in a controlled, reproducible way.
 
 1. Install Docker: https://www.docker.com/products/overview
 
-2. Pull in the web interface as a submodule...
-   ```
-   git submodule update --init --recursive .
-
-   ```
-
 2. Run this command:
 
    ```

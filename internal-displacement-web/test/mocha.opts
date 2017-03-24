@@ -1,0 +1,5 @@
+test/.setup.js
+src/**/*.spec.js
+--require env-test
+--recursive
+--bail

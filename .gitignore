@@ -8,3 +8,4 @@ id-tests.ipynb
 *.pdf
 .DS_Store
 .idea/
+node_modules
