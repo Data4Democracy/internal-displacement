@@ -121,6 +121,8 @@ class Location(Base):
 
     id = Column(Integer, primary_key=True)
     description = Column(String)
+    city = Column(String)
+    region = Column(String)
     code = Column('country', String(2), ForeignKey('country.code'))
     country = relationship('Country', back_populates='locations')
     latlong = Column(String)  # Not tackling PostGIS right now
