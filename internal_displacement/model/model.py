@@ -92,7 +92,7 @@ class Content(Base):
 class Country(Base):
     __tablename__ = 'country'
 
-    code = Column(String(2), primary_key=True)
+    code = Column(String(3), primary_key=True)
     terms = relationship('CountryTerm', back_populates='country', cascade="all, delete-orphan")
     locations = relationship('Location', back_populates='country', cascade="all, delete-orphan")
 
@@ -105,7 +105,7 @@ class CountryTerm(Base):
     __tablename__ = 'country_term'
 
     term = Column(String, primary_key=True)
-    code = Column('country', String(2), ForeignKey('country.code'))
+    code = Column('country', String(3), ForeignKey('country.code'))
     country = relationship('Country', back_populates='terms')
 
 
@@ -123,7 +123,7 @@ class Location(Base):
     description = Column(String)
     city = Column(String)
     region = Column(String)
-    code = Column('country', String(2), ForeignKey('country.code'))
+    code = Column('country', String(3), ForeignKey('country.code'))
     country = relationship('Country', back_populates='locations')
     latlong = Column(String)  # Not tackling PostGIS right now
     reports = relationship('Report', secondary=report_location, back_populates='locations')
