@@ -55,9 +55,9 @@ You can run the tests with
     
   OR if you are using yarn as your package manager:
   
-    ```shell-script
+  ```shell-script
       yarn install
-    ```
+  ```
         
 3. To run locally run the following command
   ```shell-script
