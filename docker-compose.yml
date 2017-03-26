@@ -13,7 +13,7 @@ services:
     volumes:
       - .:/internal-displacement
     ports:
-      - "8888:8888"
+      - "9123:8888"
     depends_on:
       - localdb
   nodejs:
@@ -24,6 +24,6 @@ services:
       - ./internal-displacement-web/package.json:/internal-displacement-web/package.json
       - ./internal-displacement-web/index.html:/internal-displacement-web/index.html
     ports:
-      - "3000:80"
+      - "3322:80"
     depends_on:
       - localdb
