@@ -2,14 +2,12 @@ var pg = require('pg');
 
 // create a config to configure both pooling behavior
 // and client options
-// note: all config is optional and the environment variables
-// will be read if the config is not present
+// note: these environment variables are passed into the nodejs Docker container from docker.env
 var config = {
   user: process.env.DB_USER,
   database: process.env.DB_NAME,
   password: process.env.DB_PASS,
   host: process.env.DB_HOST,
-  port: process.env.DB_PORT,
   max: 10, // max number of clients in the pool
   idleTimeoutMillis: 30000, // how long a client is allowed to remain idle before being closed
 };
