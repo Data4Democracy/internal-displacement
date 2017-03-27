@@ -2,9 +2,9 @@
 set -e
 
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" <<-EOSQL
-    CREATE USER jupyter WITH PASSWORD 'jupyter';
-    CREATE USER nodejs WITH PASSWORD 'nodejs';
+    CREATE USER d4d WITH PASSWORD 'democracy';
     CREATE DATABASE id;
-    GRANT ALL PRIVILEGES ON DATABASE id TO jupyter;
-    GRANT ALL PRIVILEGES ON DATABASE id TO nodejs;
+    GRANT ALL PRIVILEGES ON DATABASE id TO d4d;
 EOSQL
+
+psql -v ON_ERROR_STOP=1 --username "d4d" id < /schema.sql

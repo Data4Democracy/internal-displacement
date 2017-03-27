@@ -6,3 +6,5 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" <<-EOSQL
     CREATE DATABASE id_test;
     GRANT ALL PRIVILEGES ON DATABASE id_test TO tester;
 EOSQL
+
+psql -v ON_ERROR_STOP=1 --username "tester" id_test < /schema.sql
