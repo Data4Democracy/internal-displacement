@@ -8,7 +8,7 @@ var WebpackDevServer   = require('webpack-dev-server')
 var config             = require('../webpack.config.dev')
 
 var compiler
-var DEFAULT_PORT             = process.env.PORT || 80
+var DEFAULT_PORT             = process.env.PORT || 3322
 var friendlySyntaxErrorLabel = 'Syntax error:'
 
 console.log(chalk.yellow('INIT'))
