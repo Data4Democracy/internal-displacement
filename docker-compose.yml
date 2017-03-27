@@ -6,14 +6,14 @@ services:
   jupyter:
     build: .
     image: internal-displacement
-    command: sh -c "jupyter notebook --no-browser --ip=0.0.0.0 /internal-displacement/notebooks"
+    command: sh -c "jupyter notebook --no-browser --ip=0.0.0.0 --port 3323 /internal-displacement/notebooks"
     env_file: docker.env
     stdin_open: true
     tty: true
     volumes:
       - .:/internal-displacement
     ports:
-      - "9123:8888"
+      - "3323:3323"
     depends_on:
       - localdb
   nodejs:
@@ -24,6 +24,6 @@ services:
       - ./internal-displacement-web/package.json:/internal-displacement-web/package.json
       - ./internal-displacement-web/index.html:/internal-displacement-web/index.html
     ports:
-      - "3322:80"
+      - "3322:3322"
     depends_on:
       - localdb
