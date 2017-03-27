@@ -84,8 +84,8 @@ def format_date(date_string):
         dt = datetime.datetime.strptime(
             date_string, "%a, %d %b %Y %H:%M:%S %Z")
         formatted_date = dt.strftime("%Y-%m-%d %H:%M:%S")
-    except (ValueError, TypeError):
-        formatted_date = ''
+    except (ValueError, TypeError, AttributeError):
+        formatted_date = None
     return formatted_date
 
 
@@ -120,7 +120,7 @@ class Scraper(object):
             article_content_type = 'text'
             return article_text, article_pub_date, article_title, article_content_type, article_authors, article_domain
         else:  # Temporary fix to deal with https://github.com/codelucas/newspaper/issues/280
-            return "retrieval_failed", "", "", datetime.datetime.now(), "", ""
+            return "retrieval_failed", None, "", datetime.datetime.now(), "", ""
 
     def get_pdf(self, url):
         ''' Takes a pdf url, downloads it and saves it locally.'''
@@ -139,7 +139,7 @@ class Scraper(object):
         '''
         filepath, publish_date = self.get_pdf(url)
         if filepath == '':
-            return '', ''
+            return '', None
         else:
             text = str(textract.process(filepath, method='pdfminer'), 'utf-8')
             text = text.replace('\n', ' ')  # can replace with a call to
@@ -157,7 +157,7 @@ class Scraper(object):
     def pdf_article(self, url):
         article_text, article_pub_date = self.get_body_text(url)
         if article_text == '':
-            return "retrieval_failed", "", "", datetime.datetime.now(), "", ""
+            return "retrieval_failed", None, "", datetime.datetime.now(), "", ""
         else:
             article_domain = urlparse(url).hostname
             article_content_type = 'pdf'
