@@ -73,7 +73,11 @@ class TestModel(TestCase):
 
     def test_location(self):
         mmr = self.session.query(Country).filter_by(code="MMR").one_or_none() or Country(code="MMR")
-        naypyidaw = Location(description="Nay Pyi Taw", country=mmr, latlong='19°45′N 96°6′E')
+        naypyidaw = Location(description="Nay Pyi Taw",
+                             city="Nay Pyi Taw",
+                             region="Naypyitaw Union Territory",
+                             country=mmr,
+                             latlong='19°45′N 96°6′E')
         self.session.add(mmr)
         self.assertIn(naypyidaw, self.session.query(Location).filter_by(country=mmr))
 
