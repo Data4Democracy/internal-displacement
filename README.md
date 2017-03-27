@@ -109,7 +109,7 @@ be installed in a controlled, reproducible way.
 [InitDB.ipynb](http://0.0.0.0:3323/notebooks/InitDB.ipynb) notebook.
 
 
-4. Visit the node.js server at [http://localhost:3322](http://localhost:3000)
+4. Visit the node.js server at [http://localhost:3322](http://localhost:3322)
 
 Note: You can stop the docker containers using Ctrl-C.
 
