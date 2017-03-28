@@ -62,7 +62,7 @@ def common_names(place_name):
     }.get(place_name, place_name)
 
 
-def province_country_code(place_name):
+def subdivision_country_code(place_name):
     '''Try and extract the country code by looking
     at country subdivisions i.e. States, Provinces etc.
     return the country code if found
@@ -203,23 +203,25 @@ class Interpreter():
             return Category.OTHER
 
 
-    def country_code(self, place_name):
-        '''Find the ISO-3166 alpha_2 country code
-        for a given country name
+    def city_subdivision_country(self, place_name):
+        '''Return dict with city (if applicable), subdivision (if applicable),
+        and the ISO-3166 alpha_3 country code for a given place name.
+        Return None if the country cannot be identified.
         '''
         place_name = common_names(place_name)
         country_code_from_name = match_country_name(place_name)
         if country_code_from_name:
-            return country_code_from_name
-        # Try getting the country code using a province name
-        country_from_province = province_country_code(place_name)
-        if country_from_province:
-            return country_from_province
+            return {'city': None, 'subdivision': None, 'country': country_code_from_name}
+        # Try getting the country code using a subdivision name
+        country_from_subdivision = subdivision_country_code(place_name)
+        if country_from_subdivision:
+            return {'city': None, 'subdivision': place_name, 'country': country_from_subdivision}
         # Try getting the country code using a city name
         country_code = self.cities_to_countries.get(
             strip_accents(place_name), None)
         if country_code:
-            return pycountry.countries.get(alpha_2=country_code).alpha_3
+            return {'city': place_name, 'subdivision': None,
+                    'country': pycountry.countries.get(alpha_2=country_code).alpha_3}
         return None
 
     def extract_countries(self, article):
