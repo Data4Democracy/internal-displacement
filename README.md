@@ -74,7 +74,7 @@ These are the main parts and functions that make up the project.
  * Visualizing the excerpts of documents where the relevant information is reported (either looking at the map or browsing the list of URLs).
  * Visualise relability of classification and information extraction algorithms (either overall or by article)
  * Some pre-tagged datasets ([1](https://www.dropbox.com/s/p42dq6gxvdugo3d/counts_displaced_idmc_uniteideas_input_full_conflict_tag.csv?dl=0), [2](https://www.dropbox.com/s/0h71jlfc5tmm7bk/counts_evacuation_idmc_uniteideas_input_full_conflict_tag.csv?dl=0)) can be used to start exploring visualization options.
-* **App** [separate repository for web framework](https://github.com/Data4Democracy/internal-displacement-web)
+* **App** is in the `internal-displacement-web` folder
  * A non-technical-user friendly front end to wrap around the components above for inputting URLs, managing the databases, verifying data and interacting with visualisations
  * Automation of scraping, pipeline and interpreter
 
@@ -100,20 +100,25 @@ be installed in a controlled, reproducible way.
 
    In the output, you should see a line like:
    ```
-   jupyter_1  |         http://0.0.0.0:8888/?token=536690ac0b189168b95031769a989f689838d0df1008182c
+   jupyter_1  |         http://0.0.0.0:3323/?token=536690ac0b189168b95031769a989f689838d0df1008182c
    ```
 
    That URL will connect you to the Jupyter notebook server.
 
-3. Visit the node.js server at [http://localhost:3000](http://localhost:3000)
+
+3. Set up the database schema by running the contents of the
+[InitDB.ipynb](http://0.0.0.0:3323/notebooks/InitDB.ipynb) notebook.
+
+
+4. Visit the node.js server at [http://localhost:3322](http://localhost:3322)
 
 Note: You can stop the docker containers using Ctrl-C.
 
-Note: If you already have something running on port 8888 or 3000, edit `docker-compose.yml` and change the first
+Note: If you already have something running on port 3322 or 3323, edit `docker-compose.yml` and change the first
 number in the ports config to a free port on your system. eg. for 9999, make it:
 ```
     ports:
-      - "9999:8888"
+      - "9999:3322"
 ```
 
 Note: If you want to add python dependencies, add them to `requirements.txt` and run `docker-compose up --build`.
