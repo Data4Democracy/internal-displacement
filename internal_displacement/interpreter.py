@@ -193,7 +193,7 @@ class Interpreter():
         category: 
         '''
         # if a model is specified use it, otherwise load default trained model
-        label = self.classifier(article)
+        label = self.classifier.predict([article])
         category = self.encoder.inverse_transform(label)
         if category == 'disaster':
             return Category.DISASTER

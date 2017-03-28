@@ -172,7 +172,7 @@ class Pipeline(object):
         if not article.relevance:
             article.update_status(Status.PROCESSED)
             return "Processed: Not relevant"
-        # TO DO: call the classifier and set the category
+        self.categorize(article)
         article.update_status(Status.PROCESSED)
         return Status.PROCESSED
 
@@ -276,6 +276,15 @@ class Pipeline(object):
             self.session.add(date_span)
             self.session.commit()
             report.datespans.append(date_span)
+
+    def categorize(self, article):
+        '''Categorize the report
+        '''
+        category = self.interpreter.classify_category(article.content.content)
+        article_category = ArticleCategory(article_id=article.id, category=category)
+        self.session.add(article_category)
+        self.session.commit()
+        article.categories.append(article_category)
 
 
 class SQLArticleInterface(object):
