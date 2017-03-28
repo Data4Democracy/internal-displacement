@@ -105,6 +105,7 @@ be installed in a controlled, reproducible way.
 
    That URL will connect you to the Jupyter notebook server.
 
+
 3. Set up the database schema by running the contents of the
 [InitDB.ipynb](http://0.0.0.0:3323/notebooks/InitDB.ipynb) notebook.
 

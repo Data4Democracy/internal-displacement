@@ -16,6 +16,7 @@ services:
       - "3323:3323"
     depends_on:
       - localdb
+    env_file: docker.env
   nodejs:
     build: internal-displacement-web
     image: internal-displacement-web
@@ -27,3 +28,4 @@ services:
       - "3322:3322"
     depends_on:
       - localdb
+    env_file: docker.env
