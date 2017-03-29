@@ -395,6 +395,17 @@ class Interpreter():
                 matched.append(e)
         return matched
 
+    def convert_to_facts(self, fact_array, fact_type, start_offset=0):
+        facts = []
+        for fact in fact_array:
+            if isinstance(fact, spacy.tokens.token.Token):
+                facts.append(Fact(fact, fact, fact.lemma_,
+                                  fact_type, start_offset))
+            elif isinstance(fact, spacy.tokens.span.Span):
+                facts.append(
+                    Fact(fact[0], fact, fact.lemma_, fact_type, start_offset))
+        return facts
+
     def extract_locations(self, sentence, root=None):
         """
         Examines a sentence and identifies if any of its constituent tokens describe a location.
@@ -404,8 +415,6 @@ class Interpreter():
         param: root           a token
         returns: A list of strings, or None
         """
-
-        # TODO: Need to remove/change dependency on convert_to_facts
 
         if not root:
             root = sentence.root
@@ -472,11 +481,11 @@ class Interpreter():
             # Filter unlikely dates from possible dates
             likely_block_dates = self.date_likelihood(block_dates, publication_date)
             if likely_block_dates:
-                return likely_block_dates
+                return self.convert_to_facts(likely_block_dates, "date", sentence[0].idx)
         elif len(date_entities) == 1:
             likely_dates = self.date_likelihood(date_entities, publication_date)
             if likely_dates:
-                return likely_dates
+                return self.convert_to_facts(likely_dates, "date", sentence[0].idx)
         else:
             return None
 
@@ -491,7 +500,7 @@ class Interpreter():
 
         Returns
         -------
-        A list of datetime's that likely represent the dates of events in the story
+        A list of (absolute) datetime's that likely represent the dates of events in the story
         '''
 
         likely_dates = []
@@ -713,7 +722,7 @@ class Interpreter():
                 report_span.append(span)
         return report_span
 
-    def branch_search_new(self, verb, search_type, locations_memory, sentence, story, publication_date=None):
+    def branch_search_new(self, verb, search_type, dates_memory, locations_memory, sentence, story, publication_date=None):
         """
         Extract reports based upon an identified verb (reporting term).
         Extract possible locations or use most recent locations
@@ -726,8 +735,8 @@ class Interpreter():
 
         if not possible_locations:
             possible_locations = locations_memory
-        if not possible_dates and publication_date is not None:
-            possible_dates = [publication_date]
+        if not possible_dates:
+            possible_dates = dates_memory
         reports = []
         quantity = Fact(None)
         verb_objects = self.get_subjects_and_objects(
@@ -805,14 +814,18 @@ class Interpreter():
         processed_reports = []
         story = self.nlp(story)
         sentences = list(story.sents)  # Split into sentences
+        dates_memory = []  # Keep a running track of the most recent dates found in articles
         # Keep a running track of the most recent locations found in articles
         locations_memory = []
         for sentence in sentences:  # Process sentence
             reports = []
             reports = self.process_sentence_new(
-                sentence, locations_memory, story, publication_date)
+                sentence, dates_memory, locations_memory, story, publication_date)
             current_locations = self.extract_locations(sentence)
             if current_locations:
                 locations_memory = current_locations
+            current_dates = self.extract_dates(sentence, story, publication_date)
+            if current_dates:
+                dates_memory = current_dates
             processed_reports.extend(reports)
         return list(set(processed_reports))
