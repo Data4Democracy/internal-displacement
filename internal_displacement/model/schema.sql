@@ -49,6 +49,8 @@ DROP TABLE IF EXISTS location CASCADE;
 CREATE TABLE location (
     id SERIAL PRIMARY KEY,
     description TEXT,
+    city TEXT,
+    subdivision TEXT,
     country CHAR(3) REFERENCES country ON DELETE CASCADE,
     latlong TEXT
 );

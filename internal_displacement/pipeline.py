@@ -254,11 +254,14 @@ class Pipeline(object):
         if loc:
             report.locations.append(loc)
         else:
-            country_code = self.interpreter.country_code(location)
-            if country_code:
+            loc_dict = self.interpreter.city_subdivision_country(location)
+            if loc_dict:
                 country = self.session.query(Country).filter_by(
-                    code=country_code).one_or_none()
-                location = Location(description=location, country=country)
+                    code=loc_dict['country']).one_or_none()
+                location = Location(description=location,
+                                    city=loc_dict['city'],
+                                    subdivision=loc_dict['subdivision'],
+                                    country=country)
                 self.session.add(location)
                 self.session.commit()
                 report.locations.append(location)
