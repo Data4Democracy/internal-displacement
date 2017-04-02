@@ -1,12 +1,10 @@
 from unittest import TestCase
-
-import dateutil
-
 from internal_displacement.pipeline import SQLArticleInterface
-from internal_displacement.article import Article, date_time_converter
+from internal_displacement.article import Article
 import os
 import datetime
 import pandas as pd
+
 class TestSQLArticleInterface(TestCase):
 
     def setUp(self):
@@ -41,9 +39,9 @@ class TestSQLArticleInterface(TestCase):
         self.assertEqual(db_url,"www.butts.com/disasters")
         db_authors = article_from_db.author
         self.assertEqual(db_authors,"test_author_1,test_author_2")
-        db_publish_date = str(article_from_db.publish_date)
+        db_publish_date = article_from_db[3]
         self.assertEqual(db_publish_date,test_article_date_string)
-        db_domain = article_from_db.domain
+        db_domain = article_from_db[4]
         self.assertEqual(db_domain,"www.butts.com")
         db_text = article_from_db.content
         self.assertEqual(db_text,"test_content")
@@ -71,7 +69,7 @@ class TestSQLArticleInterface(TestCase):
         self.pipeline.insert_article(test_article)
         self.pipeline.to_csv("Articles","testing_csv.csv")
         test_csv_df = pd.read_csv("testing_csv.csv")
-        columns = ["url", "title" , "author" ,"publish_date" ,"domain" ,
+        columns = ["title" , "url" ,"author" ,"publish_date" ,"domain" ,
                 "content" , "content_type" , "language"]
         self.assertEqual(list(test_csv_df.columns),columns)
         csv_first_row_values = list(test_csv_df.values[0])

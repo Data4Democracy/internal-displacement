@@ -10,3 +10,4 @@ id-tests.ipynb
 .idea/
 node_modules
 internal-displacement-web/dist
+classifiers/default_model.pkl

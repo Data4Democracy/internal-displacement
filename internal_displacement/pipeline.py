@@ -1,14 +1,14 @@
-import concurrent
 import csv
-import numpy as np
-import pandas as pd
-import re
-import records
-import sqlite3
+from internal_displacement.interpreter import Interpreter
+from internal_displacement.model.model import Status, Session, Category, Article, Content, Country, CountryTerm, \
+    Location, Report, ReportDateSpan, ArticleCategory, Base
+import concurrent
 from concurrent import futures
-
-from internal_displacement.article import Article
-from internal_displacement.scraper import scrape
+import sqlite3
+import pandas as pd
+import numpy as np
+import json
+from datetime import datetime
 
 
 """
@@ -99,7 +99,6 @@ def urls_from_csv(dataset, column=None, header=1):
     return urls
 
 
-
 def sample_urls(urls, size=0.25, random=True):
     '''Return a subsample of urls
     Parameters
@@ -140,25 +139,188 @@ def sample_urls(urls, size=0.25, random=True):
         return urls[:sample_size]
 
 
+class Pipeline(object):
+    """
+    Interface for article processing
+    """
+
+    def __init__(self, session, scraper, interpreter):
+        self.session = session
+        self.scraper = scraper
+        self.interpreter = interpreter
+
+    def process_url(self, url):
+        # Create an article
+        article = self.create_article(url)
+        # Attempt to download the url and update article attributes
+        self.fetch_article(article)
+        if article.status == Status.FETCHING_FAILED:
+            return Status.FETCHING_FAILED
+        # Start processing
+        article.update_status(Status.PROCESSING)
+        # Check and update language
+        self.check_language(article)
+        if article.language != 'en':
+            article.update_status(Status.PROCESSED)
+            return "Processed: Not in English"
+        # Try and extract reports
+        self.fetch_reports(article)
+        # Set the relevance status
+        status = len(article.reports) > 0
+        article.relevance = status
+        self.session.commit()
+        if not article.relevance:
+            article.update_status(Status.PROCESSED)
+            return "Processed: Not relevant"
+        # Get the dates and set the datespans for all reports
+        self.fetch_dates(article)
+        # Categorize the article
+        self.categorize(article)
+        article.update_status(Status.PROCESSED)
+        return Status.PROCESSED
+
+    def create_article(self, url):
+        '''Create an article from a provided url.
+        '''
+        article = Article(url=url, status=Status.NEW)
+        self.session.add(article)
+        self.session.commit()
+        return article
+
+    def fetch_article(self, article):
+        '''Attempt to download and parse article.
+        Update status and add content to database (if successful).
+        '''
+        content, publish_date, title, content_type, authors, domain = self.scraper.scrape(
+            article.url)
+        if content == 'retrieval_failed':
+            article.update_status(Status.FETCHING_FAILED)
+        else:
+            self.session.query(Article).filter(Article.id == article.id).\
+                update({"domain": domain, "status": Status.FETCHED, "title": title, "publication_date": publish_date,
+                        "authors": ", ".join(authors)})
+            # Add the article content
+            content = Content(article_id=article.id, retrieval_date=datetime.now(),
+                              content=content, content_type=content_type)
+            self.session.add(content)
+            self.session.commit()
+
+    def check_language(self, article):
+        '''Check article language and update attribute.
+        '''
+        article.language = self.interpreter.check_language(
+            article.content.content)
+        self.session.commit()
+
+    def categorize(self, article, text='content'):
+        if text == 'content':
+            category = self.interpreter.classify_category(
+                article.content.content, text=text)
+        elif text == 'title':
+            category = self.interpreter.classify_category(
+                article.title, text=text)
+        category = ArticleCategory(category=category)
+        self.session.add(category)
+        self.session.commit()
+
+    def fetch_reports(self, article):
+        '''Fetch reports for a given article.
+        '''
+        reports = self.interpreter.process_article_new(article.content.content)
+        if len(reports) == 0:
+            return
+        for report in reports:
+            self.process_report(article, report)
+
+    def process_report(self, article, rep):
+        '''Create Reports for each extracted report.
+        Add locations and date-spans.
+        '''
+        report = Report(article_id=article.id, event_term=rep.event_term, subject_term=rep.subject_term,
+                        quantity=rep.quantity, tag_locations=json.dumps(
+                            rep.tag_spans),
+                        analysis_date=datetime.now())
+        self.session.add(report)
+        self.session.commit()
+
+        for location in rep.locations:
+            self.process_location(report, location)
+
+    def fetch_dates(self, article):
+        '''Fetch all dates referred to in the article
+        and update all article reports'''
+        date_times = self.interpreter.extract_all_dates(
+            article.content.content, article.publication_date)
+        if len(date_times) > 0:
+            start = min(date_times)
+            finish = max(date_times)
+            self.set_datespans(article, start, finish)
+        elif article.publication_date:
+            self.set_datespans(
+                article, article.publication_date, article.publication_date)
+
+    def set_datespans(self, article, start, finish):
+        '''Set the datespans for all reports in an article.'''
+        for report in article.reports:
+            date_span = ReportDateSpan(
+                report_id=report.id, start=start, finish=finish)
+            self.session.add(date_span)
+            self.session.commit()
+            report.datespans.append(date_span)
+
+    def process_location(self, report, location):
+        '''Process each location.
+        If location already exists, use existing location.
+        Otherwise create new location.
+        '''
+        loc = self.session.query(Location).filter_by(
+            description=location).one_or_none()
+        if loc:
+            report.locations.append(loc)
+        else:
+            loc_dict = self.interpreter.city_subdivision_country(location)
+            if loc_dict:
+                country = self.session.query(Country).filter_by(
+                    code=loc_dict['country']).one_or_none()
+                location = Location(description=location,
+                                    city=loc_dict['city'],
+                                    subdivision=loc_dict['subdivision'],
+                                    country=country)
+                self.session.add(location)
+                self.session.commit()
+                report.locations.append(location)
+
+    def categorize(self, article):
+        '''Categorize the report
+        '''
+        category = self.interpreter.classify_category(article.content.content)
+        article_category = ArticleCategory(
+            article_id=article.id, category=category)
+        self.session.add(article_category)
+        self.session.commit()
+        article.categories.append(article_category)
+
+
 class SQLArticleInterface(object):
     """
     Core SQL interface.
     """
 
-    def __init__(self, db_url=None):
+    def __init__(self, sql_database_file):
         """
         Initialize an instance of SQLArticleInterface with the path to a SQL database file.
             - If the file does not exist it will be created.
             - If the file does exist, all previously stored data will be accessible through the object methods
         :param sql_database_file:   The path to the sql database file
         """
-        self.db = records.Database(db_url)
-        if db_url.startswith('sqlite'):
-            self.db.query(
-                """CREATE TABLE IF NOT EXISTS Articles (url TEXT, title TEXT,author TEXT,publish_date TEXT,domain TEXT,
-                    content TEXT, content_type TEXT, language TEXT)""")
-            self.db.query(
-                "CREATE TABLE IF NOT EXISTS Labels (url TEXT,category TEXT)")
+        self.sql_connection = sqlite3.connect(
+            sql_database_file, isolation_level=None)
+        self.sql_cursor = self.sql_connection.cursor()
+        self.sql_cursor.execute(
+            """CREATE TABLE IF NOT EXISTS Articles (title TEXT, url TEXT,author TEXT,publish_date TEXT,domain TEXT,
+                content TEXT, content_type TEXT, language TEXT)""")
+        self.sql_cursor.execute(
+            "CREATE TABLE IF NOT EXISTS Labels (url TEXT,category TEXT)")
 
     def insert_article(self, article):
         """
@@ -173,35 +335,74 @@ class SQLArticleInterface(object):
         content_type = article.content_type
         title = article.title
         language = article.language
+        reports = article.reports
+
         if article.content == "retrieval_failed":
             return None
         try:
-            self.db.query("""
-            INSERT INTO Articles (url, title, author, publish_date, domain, content, content_type, language)
-            VALUES (:url, :title, :authors, :pub_date, :domain, :content, :content_type, :language)""",
-                          url=article.url,
-                          title=article.title,
-                          authors=",".join(article.authors),
-                          pub_date=article.get_pub_date_string(),
-                          domain=article.domain,
-                          content=article.content,
-                          content_type=article.content_type,
-                          language=article.language)
+            self.sql_cursor.execute("INSERT INTO Articles VALUES (?,?,?,?,?,?,?,?)",
+                                    (title, url, authors, pub_date, domain, content, content_type, language))
+            self.sql_connection.commit()
+        except sqlite3.IntegrityError:
+            print(
+                "URL{url} already exists in article table. Skipping.".format(url))
         except Exception as e:
             print("Exception: {}".format(e))
 
+        # Insert reports
+        # Note: This may need to modify to work with sqlalchemy
+        if len(reports) == 0:
+            # If no reports, article is not relevant
+            article.relevance = False
+        elif language == 'en':
+            # There are reports. Insert them if article is english
+            for report in reports:
+                try:
+                    self.insert_report(report)
+                except Exception as e:
+                    print("Exception: {}".format(e))
 
     def update_article(self, article):
         """
         Updates certain fields of article in database
         Fields that can be updated are: language
+        TODO: Do we want to update other fields like Reports here too?
         :param article:     An Article object
         """
+        language = article.language
+        url = article.url
         try:
-            self.db.query("""UPDATE Articles SET language = :language WHERE url = :url""",
-                          language=article.language,
-                          url=article.url)
+            self.sql_cursor.execute("""UPDATE Articles SET language = ? WHERE url = ?""",
+                                    (language, url))
             self.sql_connection.commit()
+        except Exception as e:
+            print("Exception: {}".format(e))
+
+    def insert_report(self, report):
+        '''
+        Insert the given Report and its other relevant info to DB.
+        (Note: this will need to be modified to use the sqlalchemy and the 
+            updated schema from @aneel's #100 PR)
+        :param report:      A Report schema object
+        :param article:     An Article schema object
+        '''
+        try:
+            self.sql_cursor.execute('''
+            INSERT INTO REPORT VALUES (?,?,?,?,?,?,?,?,)''',
+                                    (report.story, report.event_term, report.subject_term, report.quantity,
+                                     report.tag_spans, report.accuracy, report.analyzer, report.analysis_date))
+
+            for loc in report.locations:
+                self.sql_cursor.execute('''
+                INSERT INTO REPORT_LOCATION VALUES (?,?)''',
+                                        (report, loc))
+
+            for date_time in report.date_times:
+                # (@domingohui Mar 9 2017) Need to revise how date spans work in Report
+                self.sql_cursor.execute('''
+                INSERT INTO REPORT_DATESPAN VALUES (?,?)''',
+                                        (report, date_time))
+
         except Exception as e:
             print("Exception: {}".format(e))
 
@@ -216,14 +417,16 @@ class SQLArticleInterface(object):
         """
         dataset = csv_read(url_csv)
         urls = urls_from_csv(dataset, url_column)
-        existing_urls = [r.url
-                         for r in self.db.query("SELECT url FROM Articles")]
+        existing_urls = [r[0]
+                         for r in self.sql_cursor.execute("SELECT url FROM Articles")]
         urls = [u for u in urls if u not in existing_urls]
 
         article_futures = []
         with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+            interpreter = None  # To be initialized later
             for url in urls:
-                article_futures.append(executor.submit(scrape, url, scrape_pdfs))
+                article_futures.append(
+                    executor.submit(scrape, url, scrape_pdfs))
             for f in concurrent.futures.as_completed(article_futures):
                 try:
                     article = f.result()
@@ -231,6 +434,18 @@ class SQLArticleInterface(object):
                         continue
                     else:
                         print(article.title)
+                        if interpreter is None:
+                            # Lazy initialize Interpreter
+                            interpreter = Interpreter()
+                        # Obtain langugae of the article
+                        article.language = interpreter.check_language(article)
+                        # Obtain reports of the article
+                        article.reports = interpreter.process_article_new(
+                            article)
+                        # Obtain codes of countries related to the article
+                        article.country_codes = interpreter.extract_countries(
+                            article)
+
                         self.insert_article(article)
                 except Exception as e:
                     print("Exception: {}".format(e))
@@ -246,13 +461,13 @@ class SQLArticleInterface(object):
         df = pd.read_csv(
             csv_filepath)  # For now just using pandas, but could replace with a custom function
         urls = list(df[url_column_name].values)
-        existing_urls = [r.url
-                         for r in self.db.query("SELECT url FROM Labels")]
+        existing_urls = [r[0]
+                         for r in self.sql_cursor.execute("SELECT url FROM Labels")]
         urls = [u for u in urls if u not in existing_urls]
         labels = list(df[label_column_name].values)
         values = list(zip(urls, labels))
-        for url, label in values:
-            self.db.query("INSERT INTO Labels VALUES (:url, :label)", url=url, label=label)
+        self.sql_cursor.executemany("INSERT INTO Labels VALUES (?, ?)", values)
+        self.sql_connection.commit()
 
     def to_csv(self, table, output):
         """
@@ -260,14 +475,16 @@ class SQLArticleInterface(object):
         :param table: The name of the table to export
         :param output: The path of the output file
         """
-        if re.search("\W", table):
-            raise ValueError("Supplied table name includes non-alphanumeric characters " + table)
         try:
-            rows = self.db.query("SELECT * FROM " + table)
+            data = self.sql_cursor.execute("SELECT * FROM " + table)
+            headers = cursor = list(
+                map(lambda x: x[0], self.sql_cursor.description))
         except ValueError:
             print("Not a valid table.")
         with open(output, 'w') as f:
-            f.write(rows.export('csv'))
+            writer = csv.writer(f)
+            writer.writerow(headers)
+            writer.writerows(data)
 
     def get_training_data(self):
         """
@@ -276,8 +493,8 @@ class SQLArticleInterface(object):
             Two numpy arrays; one containing texts and one containing labels.
         """
 
-        training_cases = self.db.query(
-            "SELECT content,category FROM Articles INNER JOIN Labels ON Articles.url = Labels.url")
-        labels = [r.category for r in training_cases]
-        features = [r.content for r in training_cases]
+        training_cases = self.sql_cursor.execute(
+            "SELECT content,category FROM Articles INNER JOIN Labels ON Articles.url = Labels.url").fetchall()
+        labels = [r[1] for r in training_cases]
+        features = [r[0] for r in training_cases]
         return labels, features
