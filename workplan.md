@@ -27,14 +27,17 @@ __Activities__
 - Checks whether a URL is from a domain on an RSS whitelist (future)
 - Manages output from scraper and either appends to original database or creates new database
 
+(please see [#86](https://github.com/Data4Democracy/internal-displacement/issues/86))
+
 ### Filtering (Interpreter)
 The third filtering requirement is more specific to the `internal-displacement` domain:
 
-- Filtering oq  ut documents not reporting on human mobility (binary classification)
+- Filtering out documents not reporting on human mobility (binary classification)
 
 __Activities:__
 - Implement filtering out of documents not reporting on human mobility (modeling)
->@milanoleonardo: *'this can be done by looking at the dependency trees of the sentences in the text to make sure there is a link between a “reporting term” and a “reporting unit” (see challenge for details). This would definitely remove all documents reporting on “hip displacement” or sentences like “displaced the body of people” etc.'*
+
+> @milanoleonardo: *'this can be done by looking at the dependency trees of the sentences in the text to make sure there is a link between a “reporting term” and a “reporting unit” (see challenge for details). This would definitely remove all documents reporting on “hip displacement” or sentences like “displaced the body of people” etc.'*
 
 *How to test this functionality? Build some hand-crafted examples of things that shouldn't be included?*
 
@@ -45,7 +48,8 @@ __Activities:__
 __Activities:__
 - Select approach / model that will allow for online learning or re-training in the future with new datasets. (discussion)
 - Build and train classifier for classifiying into the 3 required classes. (modeling)
->@milanoleonardo: *'the best would be to set a fixed threshold on the probability distribution and assign a tag based on the content of the document.'*
+
+> @milanoleonardo: *'the best would be to set a fixed threshold on the probability distribution and assign a tag based on the content of the document.'*
 
 ### NLP
 

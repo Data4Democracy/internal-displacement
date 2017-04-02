@@ -1,9 +1,10 @@
+import os
 from unittest import TestCase
-from internal_displacement.interpreter import Interpreter
-from internal_displacement.scraper import *
-from urllib import request
-from bs4 import BeautifulSoup
-import re
+
+from sqlalchemy import create_engine
+
+from internal_displacement.model.model import Session, Article
+from internal_displacement.scraper import is_pdf_simple_tests, is_pdf_iframe_test, format_date, html_article
 
 
 class TestScraper(TestCase):
@@ -40,4 +41,32 @@ class TestScraper(TestCase):
         formatted_date = format_date(date_string)
         self.assertEqual(formatted_date, '')
 
+
+class TestFetch(TestCase):
+
+    def setUp(self):
+        DB_URL = os.environ.get('DB_URL')
+        if not DB_URL.endswith('/id_test'):
+            raise RuntimeError('Refusing to run tests against non-test database')
+        engine = create_engine(DB_URL)
+        Session.configure(bind=engine)
+        self.session = Session()
+
+    def tearDown(self):
+        # self.session.rollback()
+        pass
+
+
+    def test_html(self):
+        old = self.session.query(Article)\
+            .filter_by(url='http://www.independent.co.uk/news/world/asia/160-killed-and-hundreds-left-stranded-by-flooding-across-afghanistan-and-pakistan-8746566.html')\
+            .one_or_none()
+        if old:
+            self.session.delete(old)
+        self.session.commit()
+        article = html_article(
+            self.session,
+            'http://www.independent.co.uk/news/world/asia/160-killed-and-hundreds-left-stranded-by-flooding-across-afghanistan-and-pakistan-8746566.html')
+        self.assertEquals(article.domain, 'http://www.independent.co.uk')
+        self.assertRegexpMatches(article.content.content, 'Flash flood')
 
