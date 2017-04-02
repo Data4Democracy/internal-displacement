@@ -1,8 +1,5 @@
 version: '3'
 services:
-  localdb:
-    build: docker/localdb
-    image: localdb
   jupyter:
     build: .
     image: internal-displacement
@@ -13,9 +10,7 @@ services:
       - .:/internal-displacement
     ports:
       - "3323:3323"
-    depends_on:
-      - localdb
-    env_file: docker.env
+    env_file: production.env
   nodejs:
     build: internal-displacement-web
     image: internal-displacement-web
@@ -25,6 +20,11 @@ services:
       - ./internal-displacement-web/index.html:/internal-displacement-web/index.html
     ports:
       - "3322:3322"
+    env_file: production.env
+  nginx:
+    build: docker/nginx
+    image: nginx
+    ports:
+      - "80:80"
     depends_on:
-      - localdb
-    env_file: docker.env
+      - nodejs
