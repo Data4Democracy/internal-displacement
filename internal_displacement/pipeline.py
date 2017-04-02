@@ -172,6 +172,9 @@ class Pipeline(object):
         if not article.relevance:
             article.update_status(Status.PROCESSED)
             return "Processed: Not relevant"
+        # Get the dates and set the datespans for all reports
+        self.fetch_dates(article)
+        # Categorize the article
         self.categorize(article)
         article.update_status(Status.PROCESSED)
         return Status.PROCESSED
@@ -243,14 +246,35 @@ class Pipeline(object):
         for location in rep.locations:
             self.process_location(report, location)
 
-        self.process_dates(report, rep.date_times)
+    def fetch_dates(self, article):
+        '''Fetch all dates referred to in the article
+        and update all article reports'''
+        date_times = self.interpreter.extract_all_dates(
+            article.content.content, article.publication_date)
+        if len(date_times) > 0:
+            start = min(date_times)
+            finish = max(date_times)
+            self.set_datespans(article, start, finish)
+        elif article.publication_date:
+            self.set_datespans(
+                article, article.publication_date, article.publication_date)
+
+    def set_datespans(self, article, start, finish):
+        '''Set the datespans for all reports in an article.'''
+        for report in article.reports:
+            date_span = ReportDateSpan(
+                report_id=report.id, start=start, finish=finish)
+            self.session.add(date_span)
+            self.session.commit()
+            report.datespans.append(date_span)
 
     def process_location(self, report, location):
         '''Process each location.
         If location already exists, use existing location.
         Otherwise create new location.
         '''
-        loc = self.session.query(Location).filter_by(description=location).one_or_none()
+        loc = self.session.query(Location).filter_by(
+            description=location).one_or_none()
         if loc:
             report.locations.append(loc)
         else:
@@ -266,25 +290,12 @@ class Pipeline(object):
                 self.session.commit()
                 report.locations.append(location)
 
-    def process_dates(self, report, date_times):
-        '''Create datespan from extracted dates.
-        Start = Minimum extracted datetime
-        End = Maximum extracted datetime
-        '''
-        if len(date_times) > 0:
-            start = min(date_times)
-            finish = max(date_times)
-            date_span = ReportDateSpan(
-                report_id=report.id, start=start, finish=finish)
-            self.session.add(date_span)
-            self.session.commit()
-            report.datespans.append(date_span)
-
     def categorize(self, article):
         '''Categorize the report
         '''
         category = self.interpreter.classify_category(article.content.content)
-        article_category = ArticleCategory(article_id=article.id, category=category)
+        article_category = ArticleCategory(
+            article_id=article.id, category=category)
         self.session.add(article_category)
         self.session.commit()
         article.categories.append(article_category)

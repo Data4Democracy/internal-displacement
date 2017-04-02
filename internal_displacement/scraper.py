@@ -27,7 +27,7 @@ def is_pdf_simple_tests(url):
         content_type = page.getheader('Content-Type')
         if content_type == 'application/pdf':
             return url
-    except urllib.error.HTTPError:
+    except (urllib.error.HTTPError, urllib.error.URLError, UnicodeEncodeError):
         pass
 
 
@@ -41,12 +41,13 @@ def is_pdf_iframe_test(url):
         iframes = soup.find_all('iframe')
         if len(iframes) > 0:
             for frame in iframes:
-                src = frame.attrs['src']
-                # should probably replace with something more robust
-                if 'http' in src:
-                    if is_pdf_simple_tests(src):
-                        return src
-    except urllib.error.HTTPError:
+                if 'src' in frame.attrs.keys():
+                    src = frame.attrs['src']
+                    # should probably replace with something more robust
+                    if 'http' in src:
+                        if is_pdf_simple_tests(src):
+                            return src
+    except (urllib.error.HTTPError, urllib.error.URLError, UnicodeEncodeError):
         pass
 
 
@@ -131,7 +132,7 @@ class Scraper(object):
             pdf_file.write(response.read())
             pdf_file.close()
             return os.path.join('./', 'file_to_convert.pdf'), publish_date
-        except urllib.error.HTTPError as e:
+        except (urllib.error.HTTPError, urllib.error.URLError, UnicodeEncodeError) as e:
             return '', ''
 
     def get_body_text(self, url):
@@ -155,16 +156,19 @@ class Scraper(object):
         os.remove(filepath)
 
     def pdf_article(self, url):
-        article_text, article_pub_date = self.get_body_text(url)
-        if article_text == '':
+        try:
+            article_text, article_pub_date = self.get_body_text(url)
+            if article_text == '':
+                return "retrieval_failed", None, "", datetime.datetime.now(), "", ""
+            else:
+                article_domain = urlparse(url).hostname
+                article_content_type = 'pdf'
+                # improve parsing of pdfs to extract these?
+                article_title = ''
+                article_authors = ''
+                return article_text, article_pub_date, article_title, article_content_type, article_authors, article_domain
+        except:
             return "retrieval_failed", None, "", datetime.datetime.now(), "", ""
-        else:
-            article_domain = urlparse(url).hostname
-            article_content_type = 'pdf'
-            # improve parsing of pdfs to extract these?
-            article_title = ''
-            article_authors = ''
-            return article_text, article_pub_date, article_title, article_content_type, article_authors, article_domain
 
     def scrape(self, url, scrape_pdfs=True):
         """
