@@ -36,10 +36,10 @@ Front end and infrastructure
 
 1. Join the [Slack channel]((https://datafordemocracy.slack.com/messages/internal-displacement/)).
 2. Read the rest of this page and the [IDETECT challenge page](https://unite.un.org/ideas/content/idetect) to understand the project.
-* Check out our [issues](https://github.com/Data4Democracy/internal-displacement/issues) (small tasks) and [milestones](https://github.com/Data4Democracy/internal-displacement/milestones). Keep an eye out for `help-wanted`, `beginner-friendly`, and `discussion` tags. 
-* See something you want to work on? Make a comment on the issue or ping us on Slack to let us know.
-* Before writing any code, make sure you've read the [steps for contributing to a D4D project on GitHub](https://github.com/Data4Democracy/github-playground).
-* Write your code and submit a pull request to add it to the project. Reach out for help any time!
+3. Check out our [issues](https://github.com/Data4Democracy/internal-displacement/issues) (small tasks) and [milestones](https://github.com/Data4Democracy/internal-displacement/milestones). Keep an eye out for `help-wanted`, `beginner-friendly`, and `discussion` tags. 
+4. See something you want to work on? Make a comment on the issue or ping us on Slack to let us know.
+5. Beginner with GitHub? Make sure you've read the [steps for contributing to a D4D project on GitHub](https://github.com/Data4Democracy/github-playground).
+6. Write your code and submit a pull request to add it to the project. Reach out for help any time!
 
 ### Things you should know
 
