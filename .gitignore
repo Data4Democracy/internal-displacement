@@ -7,3 +7,7 @@ id-tests.ipynb
 *.sqlite
 *.pdf
 .DS_Store
+.idea/
+node_modules
+internal-displacement-web/dist
+classifiers/default_model.pkl

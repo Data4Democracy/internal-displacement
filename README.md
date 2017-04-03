@@ -2,9 +2,18 @@
 
 **Slack Channel:** [#internal-displacement](https://datafordemocracy.slack.com/messages/internal-displacement/)
 
-**Project Description:**  Classifying, tagging, analyzing and visualizing news articles about [internal displacement](https://en.wikipedia.org/wiki/Internally_displaced_person). Based on a [challenge from the IDMC](https://unite.un.org/ideas/content/idetect). Our aim is to build a tool that can populate a database with displacement events from online news articles, which can be both classified by a machine, and then verified and analyzed by a human. 
+**Project Description:**  Classifying, tagging, analyzing and visualizing news articles about [internal displacement](https://en.wikipedia.org/wiki/Internally_displaced_person). Based on a [challenge from the IDMC](https://unite.un.org/ideas/content/idetect).
 
-We are using a Python back end to scrape, tag, classify and extract information from articles, which will be wrapped in a pretty UI, so that an analyst can interact with the data.
+The tool we are building carries out a number of functions:
+
+1. Ingest a list of URLs
+2. Scrape content from the respective web pages
+3. Tag the article as relating to *disaster* or *conflict*
+4. Extract key information from text
+5. Store information in a database
+6. Display data in interactive visualisations
+
+The final aim is a simple app that can perform all of these functions with little technical knowledge needed by the user. 
 
 **Project Lead:**  
 
@@ -13,21 +22,24 @@ We are using a Python back end to scrape, tag, classify and extract information 
 **Maintainers:** These are the additional people mainly responsible for reviewing pull requests, providing feedback and monitoring issues.
 
 Scraping, processing, NLP
+
 - [@simonb](https://datafordemocracy.slack.com/messages/@simonb/)
 - [@jlln](https://datafordemocracy.slack.com/messages/@jlln/)
 
 Front end and infrastructure
+
 - [@aneel](https://datafordemocracy.slack.com/messages/@aneel/)
-- [@koshin](https://datafordemocracy.slack.com/messages/@koshin/)
+- [@wwymak](https://datafordemocracy.slack.com/messages/@wwymak/)
+- [@frenski](https://datafordemocracy.slack.com/messages/@frenski/)
 
 ## Getting started:
 
 1. Join the [Slack channel]((https://datafordemocracy.slack.com/messages/internal-displacement/)).
 2. Read the rest of this page and the [IDETECT challenge page](https://unite.un.org/ideas/content/idetect) to understand the project.
-* We use [issues](https://github.com/Data4Democracy/internal-displacement/issues) (small tasks) and [milestones](https://github.com/Data4Democracy/internal-displacement/milestones) (bigger objectives) to guide the project. Browse them to find where you can help. Keep an eye out for `help-wanted`, `beginner-friendly`, and `discussion` tags. 
-* See something you want to work on? Before you start on it, make a comment under the issue or ping us on Slack so we can assign you the task or discuss it.
-* Before writing any code, make sure you've read the [steps for contributing to a D4D project on GitHub](https://github.com/Data4Democracy/github-playground).
-* Write your code and submit a pull request to add it to the project. Reach out for help any time!
+3. Check out our [issues](https://github.com/Data4Democracy/internal-displacement/issues) (small tasks) and [milestones](https://github.com/Data4Democracy/internal-displacement/milestones). Keep an eye out for `help-wanted`, `beginner-friendly`, and `discussion` tags. 
+4. See something you want to work on? Make a comment on the issue or ping us on Slack to let us know.
+5. Beginner with GitHub? Make sure you've read the [steps for contributing to a D4D project on GitHub](https://github.com/Data4Democracy/github-playground).
+6. Write your code and submit a pull request to add it to the project. Reach out for help any time!
 
 ### Things you should know
 
@@ -35,9 +47,11 @@ Front end and infrastructure
 * **We believe good code is reviewed code.** All commits to this repository are approved by project maintainers and/or leads (listed above). The goal here is *not* to criticize or judge your abilities! Rather, sharing insights and achievements. Code reviews help us continually refine the project's scope and direction, and encourage discussion.
 * **This README belongs to everyone.** If we've missed some crucial information or left anything unclear, edit this document and submit a pull request. We welcome the feedback! Up-to-date documentation is critical to what we do, and changes like this are a great way to make your first contribution to the project.
 
-## Project Overview and Progress
+## Project Overview
 
-The final aim is to create a user friendly app that can take in many URLs that link to news articles and return a database populated with a row for each article that includes:
+There are millions of articles containing information about displaced people. Each of these is a rich source of information that can be used to analyse the flow of people and reporting about them. 
+
+We are looking to record:
 
 - URL
 - Number of times URL has been submitted
@@ -53,8 +67,6 @@ The final aim is to create a user friendly app that can take in many URLs that l
 - Reporting unit: people/persons/individuals/children/inhabitants/residents/migrants or families/households/houses/homes
 - Number displaced
 - Metrics relating to machine learning accuracy and reliability
-
-This information can then be used to analyse the flow of internally displaced people, details about reporting and to improve the classification and NLP elements of the program.
 
 ### Project Components
 
@@ -74,7 +86,7 @@ These are the main parts and functions that make up the project.
  * Visualizing the excerpts of documents where the relevant information is reported (either looking at the map or browsing the list of URLs).
  * Visualise relability of classification and information extraction algorithms (either overall or by article)
  * Some pre-tagged datasets ([1](https://www.dropbox.com/s/p42dq6gxvdugo3d/counts_displaced_idmc_uniteideas_input_full_conflict_tag.csv?dl=0), [2](https://www.dropbox.com/s/0h71jlfc5tmm7bk/counts_evacuation_idmc_uniteideas_input_full_conflict_tag.csv?dl=0)) can be used to start exploring visualization options.
-* **App** [separate repository for web framework](https://github.com/Data4Democracy/internal-displacement-web)
+* **App** is in the `internal-displacement-web` folder
  * A non-technical-user friendly front end to wrap around the components above for inputting URLs, managing the databases, verifying data and interacting with visualisations
  * Automation of scraping, pipeline and interpreter
 
@@ -85,49 +97,61 @@ another option is to run in a Docker container. That way, all of the dependencie
 be installed in a controlled, reproducible way.
 
 1. Install Docker: https://www.docker.com/products/overview
-2. Build the docker container (unfortunately, this will take a while):
+
+2. Run this command:
+
+   ```
+   docker-compose up
+   ```
+
+   Unfortunately, this will take quite a while the first time. It's fetching and building
+   all of its dependencies. Subsequent runs should be much faster.
+
+   This will start up a couple of docker containers, one running postgres, and the other
+   running a Jupyter notebook server.
+
+   In the output, you should see a line like:
+   ```
+   jupyter_1  |         http://0.0.0.0:3323/?token=536690ac0b189168b95031769a989f689838d0df1008182c
+   ```
+
+   That URL will connect you to the Jupyter notebook server.
+
+
+3. Set up the database schema by running the contents of the
+[InitDB.ipynb](http://0.0.0.0:3323/notebooks/InitDB.ipynb) notebook.
+
+
+4. Visit the node.js server at [http://localhost:3322](http://localhost:3322)
+
+Note: You can stop the docker containers using Ctrl-C.
+
+Note: If you already have something running on port 3322 or 3323, edit `docker-compose.yml` and change the first
+number in the ports config to a free port on your system. eg. for 9999, make it:
+```
+    ports:
+      - "9999:3322"
+```
+
+Note: If you want to add python dependencies, add them to `requirements.txt` and run `docker-compose up --build`.
+
+Note: if you want to run SQL commands againt the database directly, you can do
+that by starting a Terminal within Jupyter and running the PostgreSQL shell:
 
 ```
-docker build -t internal-displacement .
+psql -h localdb -U tester id_test
 ```
 
-    
-3. Run the container. By default, this starts a jupyter notebook server:
-
-```
-docker run -it --rm -p 8888:8888 -v $PWD:/project internal-displacement
-```
-
-Change the first 8888 to another port, if you're already running something there.
-    
-4. You can also run the unit tests with:
-
-```
-docker run --rm internal-displacement nosetests
-```
+Note: If you want to connect to a remote database, edit the `docker.env` file with the DB url for your remote database.
 
 
-### Progress
+### Skills Needed
 
-The flow chart below shows the main project aims and their level of completion:
-
-- Green - mostly complete
-- Amber - in progress/being explored
-- Red - work not started
-- (Gray text - non essential feature)
-
-If you would like to help with any of the incomplete features, we'd love to have you on the team!
-
-![](images/internal-displacement-plan.png?raw=true)
-
-So far we have used **Python 3** for the internal engine of our application. 
-
-We currently need people with skills in:
-
-- **JavaScript/HTML/css** (making the UI)
-- **Web frameworks - (django/nodejs, we’re undecided)** - (building the application)
-- **AWS or other devops** - (automating and infrastructure)
-- **Visualisation** - (visualise internal displacement crises and machine learning reliability)
+- **Python 3**
+- **JavaScript/HTML/css**
+- **Nodejs**
+- **AWS**
+- **Visualisation (D3)**
 
 ### Tips for working on this project
 

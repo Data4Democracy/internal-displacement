@@ -1,0 +1,31 @@
+version: '3'
+services:
+  localdb:
+    build: localdb
+    image: localdb
+  jupyter:
+    build: .
+    image: internal-displacement
+    command: sh -c "jupyter notebook --no-browser --ip=0.0.0.0 --port 3323 /internal-displacement/notebooks"
+    env_file: docker.env
+    stdin_open: true
+    tty: true
+    volumes:
+      - .:/internal-displacement
+    ports:
+      - "3323:3323"
+    depends_on:
+      - localdb
+    env_file: docker.env
+  nodejs:
+    build: internal-displacement-web
+    image: internal-displacement-web
+    volumes:
+      - ./internal-displacement-web/src:/internal-displacement-web/src
+      - ./internal-displacement-web/package.json:/internal-displacement-web/package.json
+      - ./internal-displacement-web/index.html:/internal-displacement-web/index.html
+    ports:
+      - "3322:3322"
+    depends_on:
+      - localdb
+    env_file: docker.env
