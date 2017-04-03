@@ -2,9 +2,18 @@
 
 **Slack Channel:** [#internal-displacement](https://datafordemocracy.slack.com/messages/internal-displacement/)
 
-**Project Description:**  Classifying, tagging, analyzing and visualizing news articles about [internal displacement](https://en.wikipedia.org/wiki/Internally_displaced_person). Based on a [challenge from the IDMC](https://unite.un.org/ideas/content/idetect). Our aim is to build a tool that can populate a database with displacement events from online news articles, which can be both classified by a machine, and then verified and analyzed by a human. 
+**Project Description:**  Classifying, tagging, analyzing and visualizing news articles about [internal displacement](https://en.wikipedia.org/wiki/Internally_displaced_person). Based on a [challenge from the IDMC](https://unite.un.org/ideas/content/idetect).
 
-We are using a Python back end to scrape, tag, classify and extract information from articles, which will be wrapped in a pretty UI, so that an analyst can interact with the data.
+The tool we are building carries out a number of functions:
+
+1. Ingest a list of URLs
+2. Scrape content from the respective web pages
+3. Tag the article as relating to *disaster* or *conflict*
+4. Extract key information from text
+5. Store information in a database
+6. Display data in interactive visualisations
+
+The final aim is a simple app that can perform all of these functions with little technical knowledge needed by the user. 
 
 **Project Lead:**  
 
@@ -13,19 +22,22 @@ We are using a Python back end to scrape, tag, classify and extract information 
 **Maintainers:** These are the additional people mainly responsible for reviewing pull requests, providing feedback and monitoring issues.
 
 Scraping, processing, NLP
+
 - [@simonb](https://datafordemocracy.slack.com/messages/@simonb/)
 - [@jlln](https://datafordemocracy.slack.com/messages/@jlln/)
 
 Front end and infrastructure
+
 - [@aneel](https://datafordemocracy.slack.com/messages/@aneel/)
-- [@koshin](https://datafordemocracy.slack.com/messages/@koshin/)
+- [@wwymak](https://datafordemocracy.slack.com/messages/@wwymak/)
+- [@frenski](https://datafordemocracy.slack.com/messages/@frenski/)
 
 ## Getting started:
 
 1. Join the [Slack channel]((https://datafordemocracy.slack.com/messages/internal-displacement/)).
 2. Read the rest of this page and the [IDETECT challenge page](https://unite.un.org/ideas/content/idetect) to understand the project.
-* We use [issues](https://github.com/Data4Democracy/internal-displacement/issues) (small tasks) and [milestones](https://github.com/Data4Democracy/internal-displacement/milestones) (bigger objectives) to guide the project. Browse them to find where you can help. Keep an eye out for `help-wanted`, `beginner-friendly`, and `discussion` tags. 
-* See something you want to work on? Before you start on it, make a comment under the issue or ping us on Slack so we can assign you the task or discuss it.
+* Check out our [issues](https://github.com/Data4Democracy/internal-displacement/issues) (small tasks) and [milestones](https://github.com/Data4Democracy/internal-displacement/milestones). Keep an eye out for `help-wanted`, `beginner-friendly`, and `discussion` tags. 
+* See something you want to work on? Make a comment on the issue or ping us on Slack to let us know.
 * Before writing any code, make sure you've read the [steps for contributing to a D4D project on GitHub](https://github.com/Data4Democracy/github-playground).
 * Write your code and submit a pull request to add it to the project. Reach out for help any time!
 
@@ -35,9 +47,11 @@ Front end and infrastructure
 * **We believe good code is reviewed code.** All commits to this repository are approved by project maintainers and/or leads (listed above). The goal here is *not* to criticize or judge your abilities! Rather, sharing insights and achievements. Code reviews help us continually refine the project's scope and direction, and encourage discussion.
 * **This README belongs to everyone.** If we've missed some crucial information or left anything unclear, edit this document and submit a pull request. We welcome the feedback! Up-to-date documentation is critical to what we do, and changes like this are a great way to make your first contribution to the project.
 
-## Project Overview and Progress
+## Project Overview
 
-The final aim is to create a user friendly app that can take in many URLs that link to news articles and return a database populated with a row for each article that includes:
+There are millions of articles containing information about displaced people. Each of these is a rich source of information that can be used to analyse the flow of people and reporting about them. 
+
+We are looking to record:
 
 - URL
 - Number of times URL has been submitted
@@ -53,8 +67,6 @@ The final aim is to create a user friendly app that can take in many URLs that l
 - Reporting unit: people/persons/individuals/children/inhabitants/residents/migrants or families/households/houses/homes
 - Number displaced
 - Metrics relating to machine learning accuracy and reliability
-
-This information can then be used to analyse the flow of internally displaced people, details about reporting and to improve the classification and NLP elements of the program.
 
 ### Project Components
 
@@ -125,35 +137,21 @@ Note: If you want to add python dependencies, add them to `requirements.txt` and
 
 Note: if you want to run SQL commands againt the database directly, you can do
 that by starting a Terminal within Jupyter and running the PostgreSQL shell:
+
 ```
 psql -h localdb -U tester id_test
-
 ```
 
 Note: If you want to connect to a remote database, edit the `docker.env` file with the DB url for your remote database.
 
 
-### Progress
+### Skills Needed
 
-The flow chart below shows the main project aims and their level of completion:
-
-- Green - mostly complete
-- Amber - in progress/being explored
-- Red - work not started
-- (Gray text - non essential feature)
-
-If you would like to help with any of the incomplete features, we'd love to have you on the team!
-
-![](images/internal-displacement-plan.png?raw=true)
-
-So far we have used **Python 3** for the internal engine of our application. 
-
-We currently need people with skills in:
-
-- **JavaScript/HTML/css** (making the UI)
-- **Web frameworks - (django/nodejs, we’re undecided)** - (building the application)
-- **AWS or other devops** - (automating and infrastructure)
-- **Visualisation** - (visualise internal displacement crises and machine learning reliability)
+- **Python 3**
+- **JavaScript/HTML/css**
+- **Nodejs**
+- **AWS**
+- **Visualisation (D3)**
 
 ### Tips for working on this project
 
