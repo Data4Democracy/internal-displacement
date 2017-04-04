@@ -2,7 +2,7 @@
   "name": "id-web-client",
   "version": "0.1.0",
   "private": true,
-  "proxy": "http://localhost:3001/",
+  "proxy": "http://localhost:3322/",
   "devDependencies": {
     "react-scripts": "0.9.5"
   },
