@@ -22,14 +22,11 @@ services:
     volumes:
       - ./internal-displacement-web/client/public:/internal-displacement-web/client/public
       - ./internal-displacement-web/client/src:/internal-displacement-web/client/src
-      - ./internal-displacement-web/server/public:/internal-displacement-web/server/public
-      - ./internal-displacement-web/server/src:/internal-displacement-web/server/src
+      - ./internal-displacement-web/client/package.json:/internal-displacement-web/client/package.json
+      - ./internal-displacement-web/server/:/internal-displacement-web/server
       - ./internal-displacement-web/server/package.json:/internal-displacement-web/server/package.json
-      - ./internal-displacement-web/src:/internal-displacement-web/public
-      - ./internal-displacement-web/src:/internal-displacement-web/src
       - ./internal-displacement-web/package.json:/internal-displacement-web/package.json
     ports:
-      - "3322:3322"
       - "3000:3000"
     depends_on:
       - localdb
