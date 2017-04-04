@@ -28,5 +28,6 @@ services:
       - ./internal-displacement-web/package.json:/internal-displacement-web/package.json
     ports:
       - "3000:3000"
+      - "3322:3322"
     depends_on:
       - localdb
