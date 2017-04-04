@@ -8,7 +8,7 @@ const app = express();
 const server = http.createServer(app);
 require('./routes')(app);
 
-app.set('port', (process.env.PORT || 3001));
+app.set('port', (process.env.PORT || 3322));
 
 if (process.env.NODE_ENV === 'production') {
     app.use(express.static('client/build'));
