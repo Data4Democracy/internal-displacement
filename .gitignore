@@ -1,13 +1,23 @@
-*.csv
-*.pyc
+# Notebooks
 notebooks/test.ipynb
 notebooks/.ipynb_checkpoints/*.ipynb
 .ipynb_checkpoints/*.ipynb
 id-tests.ipynb
+
+# Test data
 *.sqlite
 *.pdf
-.DS_Store
-.idea/
+
+# Front end
 node_modules
 internal-displacement-web/dist
 classifiers/default_model.pkl
+npm-debug.log
+
+# Misc
+*.pyc
+.idea/
+*.csv
+
+# Mac
+.DS_Store
