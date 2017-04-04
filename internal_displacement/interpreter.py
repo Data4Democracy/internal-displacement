@@ -122,8 +122,21 @@ def get_absolute_date(relative_date_string, publication_date=None):
     cal = parsedatetime.Calendar()
     parsed_result = cal.nlp(relative_date_string, publication_date)
     if parsed_result is not None:
-        # Check if parse is successful
-        return parsed_result[0][0]
+        # Parse is successful
+        parsed_absolute_date = parsed_result[0][0]
+
+        # Assumption: input date string is in the past
+        # If parsed date is in the future (relative to publication_date), 
+        #   we roll it back to the past
+        # TODO: need to test if same date works or not
+        #       e.g. publication_date == 18:00 March 31
+        #            relative_date_string == '3 hours ago' OR '15:00'
+        if publication_date and parsed_absolute_date > publication_date:
+            delta = parsed_absolute_date - publication_date
+            return parsed_absolute_date - 2 * delta
+        else:
+            # Return if date is in the past already or no publication_date is provided
+            return parsed_absolute_date
     else:
         return None
 
