@@ -20,10 +20,14 @@ services:
     build: internal-displacement-web
     image: internal-displacement-web
     volumes:
-      - ./internal-displacement-web/src:/internal-displacement-web/src
+      - ./internal-displacement-web/client/public:/internal-displacement-web/client/public
+      - ./internal-displacement-web/client/src:/internal-displacement-web/client/src
+      - ./internal-displacement-web/client/package.json:/internal-displacement-web/client/package.json
+      - ./internal-displacement-web/server/:/internal-displacement-web/server
+      - ./internal-displacement-web/server/package.json:/internal-displacement-web/server/package.json
       - ./internal-displacement-web/package.json:/internal-displacement-web/package.json
-      - ./internal-displacement-web/index.html:/internal-displacement-web/index.html
     ports:
+      - "3000:3000"
       - "3322:3322"
     depends_on:
       - localdb
