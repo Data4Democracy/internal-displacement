@@ -5,8 +5,8 @@ WORKDIR /internal-displacement-web
 
 COPY . /internal-displacement-web
 
-RUN npm install
-RUN cd /internal-displacement-web/client && npm install
-RUN cd /internal-displacement-web/server && npm install
+RUN yarn install
+RUN cd /internal-displacement-web/client && yarn install
+RUN cd /internal-displacement-web/server && yarn install
 
 CMD npm run start
