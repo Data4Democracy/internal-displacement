@@ -11,10 +11,10 @@ module.exports = function (app) {
 
     app.use(bodyParser.json()); // for parsing application/json
     app.use(bodyParser.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
+
     // Insert routes below
-
     app.use('/api/test', require('./api/test'));
-
+    app.use('/api/testDB', require('./api/sampleArticleRequest'));
 
     // All other routes should redirect to the index.html
     app.route('/')
