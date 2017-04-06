@@ -21,3 +21,4 @@ npm-debug.log
 
 # Mac
 .DS_Store
+/internal-displacement-web/server/pgDB/pgConfig.js
