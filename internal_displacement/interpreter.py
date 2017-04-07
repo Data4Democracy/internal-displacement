@@ -8,7 +8,8 @@ import unicodedata
 import requests
 import urllib.request
 import parsedatetime
-from datetime import datetime
+from datetime import datetime, timedelta
+from functools import reduce
 from internal_displacement.extracted_report import ExtractedReport
 from internal_displacement.extracted_report import Fact
 from sklearn.externals import joblib
@@ -110,13 +111,13 @@ def get_absolute_date(relative_date_string, publication_date=None):
     -----------
     relative_date_string        the relative date in an article (e.g. 'Last week'): String
     publication_date            the publication_date of the article: datetime
+    
     Returns:
     --------
     One of: 
         - a datetime that represents the absolute date of the relative date based on 
             the publication_date
         - None, if parse is not successful
-        TODO: Q: In this case, should we return the publication_date instead?
     """
 
     cal = parsedatetime.Calendar()
@@ -128,16 +129,40 @@ def get_absolute_date(relative_date_string, publication_date=None):
         # Assumption: input date string is in the past
         # If parsed date is in the future (relative to publication_date), 
         #   we roll it back to the past
-        # TODO: need to test if same date works or not
-        #       e.g. publication_date == 18:00 March 31
-        #            relative_date_string == '3 hours ago' OR '15:00'
+        
         if publication_date and parsed_absolute_date > publication_date:
-            delta = parsed_absolute_date - publication_date
-            return parsed_absolute_date - 2 * delta
+            # parsedatetime returns a date in the future
+            # likely because year isn't specified or date_string is relative
+            
+            # Check a specific date is included
+            # TODO: Smarter way or regex to check if relative_date_string 
+            #       contains a month name?
+            months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 
+                      'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
+            contains_month = reduce( 
+                    lambda result, month: result or relative_date_string.lower().find(month) != -1, 
+                    months, False)
+            
+            if contains_month:
+                # TODO: Is it enough to just check for month names to determine if a 
+                #       date_string specifies a particular date?
+
+                # If date is specified explicity, and year is not
+                # roll back 1 year
+                return datetime.datetime(parsed_absolute_date.year-1, 
+                        parsed_absolute_date.month, parsed_absolute_date.day)
+            else:
+                # Use the relative datetime delta and roll back
+                delta = parsed_absolute_date - publication_date
+                num_weeks = int(delta.days/7)
+                and_num_days_after = 7 if delta.days%7 == 0 else delta.days%7
+                return publication_date - timedelta(weeks=num_weeks) - \
+                        timedelta(7-and_num_days_after)
         else:
             # Return if date is in the past already or no publication_date is provided
             return parsed_absolute_date
     else:
+        # Parse unsucessful
         return None
 
 
