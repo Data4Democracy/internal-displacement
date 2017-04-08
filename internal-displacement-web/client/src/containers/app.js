@@ -1,4 +1,7 @@
 import React, { Component, PropTypes } from 'react';
+import {createStore} from 'redux';
+import {Provider, connect} from 'react-redux';
+
 import Header from '../common/Header';
 const propTypes = {
   children: PropTypes.element.isRequired,

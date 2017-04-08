@@ -16,10 +16,14 @@ function parseJSON(response) {
 
 export const dummyMapData = () => {
 	const dummyMapUrl = 'https://jamesleondufour.carto.com/api/v2/sql?q=select%20count,%20long,%20lat,%20date%20from%20public.gdelt_refugee_2016';
-	const dummyTestUrl = `${window.location.orgin}/api/test`;
+	const dummyTestUrl = `${window.location.origin}/api/test`;
 	return fetch(dummyTestUrl).then(checkStatus).then(parseJSON)
 	// return fetch(dummyMapUrl).then(response => {
 	// 		return response.json();
 	// 	}
 	// )
-}
+};
+
+export const testDB = () => {
+    return fetch(`${window.location.origin}/api/testDB`).then(checkStatus).then(parseJSON);
+};
