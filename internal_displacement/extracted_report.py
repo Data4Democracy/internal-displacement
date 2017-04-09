@@ -65,6 +65,24 @@ def convert_quantity(value):
 	    'nonillion':    1000000000000000000000000000000,
 	    'decillion':    1000000000000000000000000000000000,
 	}
+	
+	Vague = {
+		'numbers':		5,
+	    'dozens':		55,
+	    'tens':			55,
+		'hundreds':		550,
+		'thousands':	5500,
+		'millions':		5500000,
+	    'billions':     5500000000,
+	    'trillions':    5500000000000,
+	    'quadrillions': 5500000000000000,
+	    'quintillions': 5500000000000000000,
+	    'sextillions':  5500000000000000000000,
+	    'septillions':  5500000000000000000000000,
+	    'octillions':   5500000000000000000000000000,
+	    'nonillions':   5500000000000000000000000000000,
+	    'decillions':   5500000000000000000000000000000000,
+	}
 
 	a = []
 	if not type(value) is list:
@@ -74,23 +92,39 @@ def convert_quantity(value):
 		
 	n = 0
 	g = 0
+	vague_of = False
 	for w in a:
 		try:
 			x = int(w)
 			g += x
 		except:
-			x = Small.get(w, None)
-			if x is not None:
-				g += x
+			if w.lower() == 'of':
+				vague_of = True
+				continue
+			
+			if vague_of:
+				if w[-1:] != 's':
+					w = w + 's'
+				if w == 'hundreds' or w == 'hundred':
+					g *= 100
+				elif w[:-1] in Magnitude:
+					g *= Magnitude[w[:-1]]
+				continue
+				
+			if w in Small:
+				g += Small[w]
 			elif w == "hundred" and g != 0:
 				g *= 100
+			elif w in Magnitude:
+				n += g * Magnitude[w]
+				g = 0
+			elif w in Vague:
+				g = Vague[w]
 			else:
-				x = Magnitude.get(w, None)
-				if x is not None:
-					n += g * x
-					g = 0
-				else:
-					return none
+				return none
+				
+		vague_of = False
+		
 	return n + g
 
 

@@ -12,3 +12,8 @@ class TestExtractedReport(TestCase):
 		self.assertEqual(convert_quantity("twelve thousand three hundred four"), 12304)
 		self.assertEqual(convert_quantity("32 thousand"), 32000)
 		self.assertEqual(convert_quantity(["one", "million"]), 1000000)
+		self.assertEqual(convert_quantity("hundreds of millions"), 550000000)
+		self.assertEqual(convert_quantity("tens of thousands"), 55000)
+		self.assertEqual(convert_quantity("tens of thousand"), 55000)
+		self.assertEqual(convert_quantity("dozens of people"), 55)
+		
