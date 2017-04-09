@@ -121,7 +121,7 @@ def convert_quantity(value):
 			elif w in Vague:
 				g = Vague[w]
 			else:
-				return none
+				return None
 				
 		vague_of = False
 		
