@@ -2,9 +2,7 @@ import React, { Component } from 'react';
 import logo from './logo.svg';
 import './App.css';
 import Bootstrap from 'bootstrap/dist/css/bootstrap.css';
-import { render } from 'react-dom'
-import { Provider } from 'react-redux'
-import { Router, browserHistory } from 'react-router'
+import { render } from 'react-dom';
 import { syncHistoryWithStore } from 'react-router-redux'
 
 class App extends Component {
