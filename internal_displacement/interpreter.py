@@ -149,7 +149,7 @@ def get_absolute_date(relative_date_string, publication_date=None):
 
                 # If date is specified explicity, and year is not
                 # roll back 1 year
-                return datetime.datetime(parsed_absolute_date.year-1, 
+                return datetime(parsed_absolute_date.year-1, 
                         parsed_absolute_date.month, parsed_absolute_date.day)
             else:
                 # Use the relative datetime delta and roll back
