@@ -9,7 +9,8 @@
 
   },
   "scripts": {
-    "start": "concurrently \"nodemon server\" \"cd client && npm start\""
+    "start": "concurrently \"nodemon server\" \"cd client && npm start\"",
+    "start-localDB": "NODE_DB=LOCAL concurrently \"nodemon server\" \"cd client && npm start\""
   },
   "devDependencies": {
     "concurrently": "^3.4.0",
