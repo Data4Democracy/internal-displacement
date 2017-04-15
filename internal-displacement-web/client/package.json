@@ -16,6 +16,7 @@
     "react-bootstrap": "^0.30.7",
     "react-dom": "^15.4.2",
     "react-map-gl": "^1.8.2",
+    "react-map-gl-alt": "^0.4.1",
     "react-map-gl-heatmap-overlay": "^1.1.2",
     "react-redux": "^5.0.3",
     "react-router": "^2.6.0",

@@ -4,8 +4,9 @@ import './mapbox-gl.css'; //importing here since there are issues with webpack b
 import './mapVis.css';
 import  {RenderMap } from './components/map';
 import {loadIDData, updateMap} from './actions';
-import reducer from './reducers/mapReducers'
+import {createStore} from 'react-redux';
 
+// const store = createStore(mapReducer);
 
 class MapVizPage extends  Component {
     constructor(props) {
@@ -13,24 +14,37 @@ class MapVizPage extends  Component {
         this.state = {
             width: window.innerWidth,
             height: window.innerHeight,
+            mapData: []
         };
         window.addEventListener('resize', () => this.setState({width: window.innerWidth}));
     }
 
-    componentWillMount() {
+    componentDidMount() {
+        let self = this;
     // componentDidMount() {
-    //     dummyMapData().then(data => {
-    //         console.log(data);
-    //         this.props.dispatch(loadIDData(data))
-    //         this.setState({mapData: data})
-    //     });
+        dummyMapData().then(data => {
+            console.log('data', self.state, self.setState);
+            let parsed = JSON.parse(data).rows;
+            // this.props.dispatch(loadIDData(data))
+            self.setState({mapData: parsed})
+            self.state.mapData = data
+        });
+
         // console.log(RenderMap)
     }
 
     render() {
-        console.log(this.state.width);
+        console.log(this.state);
         // return (<div>Map here</div>)
-        return (RenderMap({width: this.state.width, height: this.state.height, latitude: 0, longitude: 0, zoom:0}))
+        return (
+
+            RenderMap({
+                width: this.state.width,
+                height: this.state.height,
+                latitude: 0, longitude: 0,
+                zoom:0,
+                mapData: this.state.mapData})
+        )
     }
 
 }

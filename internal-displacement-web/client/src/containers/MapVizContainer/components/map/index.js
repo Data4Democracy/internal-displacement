@@ -11,18 +11,43 @@ export const renderVisualizationOverlay = (data) => {
     // const param = {
     //     props: this.props,
     //     state: this.state,
-    //     onWebGLInitialized: this._onWebGLInitialized,
-    //     effects: this._effects,
+    // //     onWebGLInitialized: this._onWebGLInitialized,
+    // //     effects: this._effects,
     // }
+
+    if (data) {
 
     return (
         <div>
+
             {HeatMapOverlayRender(data) }
         </div>
     )
+    } else {
+        return( <div></div> )
+    }
 };
 export const RenderMap = (props) => {
     console.log(props)
+
+    if ( !props.mapData || props.mapData.length === 0) {
+        return (
+
+            <MapGL
+                mapboxApiAccessToken={MAPBOX_ACCESS_TOKEN}
+                width={props.width}
+                height={props.height}
+                latitude={props.latitude}
+                longitude={props.longitude}
+                zoom={props.zoom}
+
+                mapStyle='mapbox://styles/mapbox/light-v9'
+
+            >
+                <div>Map rendering</div>
+            </MapGL>
+        );
+    }
 
     return (
 
@@ -37,7 +62,7 @@ export const RenderMap = (props) => {
             mapStyle='mapbox://styles/mapbox/light-v9'
 
         >
-            {renderVisualizationOverlay('abc')}
+            {renderVisualizationOverlay(props)}
         </MapGL>
         // <MapGL
         //     mapboxApiAccessToken={MAPBOX_ACCESS_TOKEN}
