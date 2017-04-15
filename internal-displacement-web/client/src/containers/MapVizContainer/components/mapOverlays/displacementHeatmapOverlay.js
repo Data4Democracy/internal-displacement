@@ -1,19 +1,35 @@
 import React, { Component } from 'react';
-import DeckGL from 'deck.gl';
-import HeatmapOverlay from 'react-map-gl-heatmap-overlay';
+// import DeckGL from 'deck.gl';
+// import HeatmapOverlay from 'react-map-gl-heatmap-overlay';
+import {ScatterPlotOverlay} from 'react-map-gl';
 
-const HeatMapOverlay = (props) => {
-    const { idData} = props.idData;
-    const { width, height,  mapViewState  } = props.state;
+
+
+const HeatMapOverlayRender = (param) => {
+    console.log('heatmapoverlay render', param)
+    const { idData} = param.mapData;
+    const { width, height,  mapViewState  } = param.state;
     return (
-        <HeatmapOverlay
-            locations={idData}
+    //     <HeatmapOverlay
+    //         locations={idData}
+    //         {...mapViewState}
+    //         width={width}
+    //         height={height}
+    //         lngLatAccessor={(data) => [data.long, data.lat]}
+    //     />
+        <ScatterPlotOverlay
             {...mapViewState}
-            width={width}
-            height={height}
+            locations={idData}
+            dotRadius={4}
+            globalOpacity={1}
+            compositeOperation="screen"
+            dotFill="#1FBAD6"
+            renderWhileDragging={true}
             lngLatAccessor={(data) => [data.long, data.lat]}
         />
     )
+
+
 };
 
-export default HeatmapOverlay;
+export default HeatMapOverlayRender;

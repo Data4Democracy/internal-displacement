@@ -2,7 +2,9 @@ import React, {Component} from 'react';
 import { dummyMapData, testDB} from './../../Api/api';
 import './mapbox-gl.css'; //importing here since there are issues with webpack building mapbox-gl
 import './mapVis.css';
-import  RenderMap  from './components/map';
+import  {RenderMap } from './components/map';
+import {loadIDData, updateMap} from './actions';
+import reducer from './reducers/mapReducers'
 
 
 class MapVizPage extends  Component {
@@ -10,15 +12,18 @@ class MapVizPage extends  Component {
         super(props);
         this.state = {
             width: window.innerWidth,
-            height: window.innerHeight
+            height: window.innerHeight,
         };
         window.addEventListener('resize', () => this.setState({width: window.innerWidth}));
     }
 
-    componentDidMount() {
-        // dummyMapData().then(data => {
-        //     console.log(data);
-        // });
+    componentWillMount() {
+    // componentDidMount() {
+    //     dummyMapData().then(data => {
+    //         console.log(data);
+    //         this.props.dispatch(loadIDData(data))
+    //         this.setState({mapData: data})
+    //     });
         // console.log(RenderMap)
     }
 

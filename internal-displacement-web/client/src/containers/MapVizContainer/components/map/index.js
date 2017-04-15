@@ -3,10 +3,27 @@ import React from 'react';
 import MapGL from 'react-map-gl';
 // import MapboxGLMap from 'react-map-gl';
 import { MAPBOX_ACCESS_TOKEN } from './../../constants/mapConstants';
-// import HeatmapOverlay from './../mapOverlays/displacementHeatmapOverlay';
+import HeatMapOverlayRender from './../mapOverlays/displacementHeatmapOverlay';
 
-const RenderMap = (props) => {
+export const renderVisualizationOverlay = (data) => {
+    console.log(data, 'render vix overlay')
+    //
+    // const param = {
+    //     props: this.props,
+    //     state: this.state,
+    //     onWebGLInitialized: this._onWebGLInitialized,
+    //     effects: this._effects,
+    // }
+
+    return (
+        <div>
+            {HeatMapOverlayRender(data) }
+        </div>
+    )
+};
+export const RenderMap = (props) => {
     console.log(props)
+
     return (
 
         <MapGL
@@ -20,6 +37,7 @@ const RenderMap = (props) => {
             mapStyle='mapbox://styles/mapbox/light-v9'
 
         >
+            {renderVisualizationOverlay('abc')}
         </MapGL>
         // <MapGL
         //     mapboxApiAccessToken={MAPBOX_ACCESS_TOKEN}
@@ -41,4 +59,4 @@ const RenderMap = (props) => {
 };
 
 
-export default RenderMap
+// export default RenderMap
