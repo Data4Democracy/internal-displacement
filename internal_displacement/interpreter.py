@@ -111,7 +111,7 @@ def get_absolute_date(relative_date_string, publication_date=None):
     -----------
     relative_date_string        the relative date in an article (e.g. 'Last week'): String
     publication_date            the publication_date of the article: datetime
-    
+
     Returns:
     --------
     One of: 
@@ -127,39 +127,40 @@ def get_absolute_date(relative_date_string, publication_date=None):
         parsed_absolute_date = parsed_result[0][0]
 
         # Assumption: input date string is in the past
-        # If parsed date is in the future (relative to publication_date), 
+        # If parsed date is in the future (relative to publication_date),
         #   we roll it back to the past
-        
+
         if publication_date and parsed_absolute_date > publication_date:
             # parsedatetime returns a date in the future
             # likely because year isn't specified or date_string is relative
-            
+
             # Check a specific date is included
-            # TODO: Smarter way or regex to check if relative_date_string 
+            # TODO: Smarter way or regex to check if relative_date_string
             #       contains a month name?
-            months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 
+            months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun',
                       'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
-            contains_month = reduce( 
-                    lambda result, month: result or relative_date_string.lower().find(month) != -1, 
-                    months, False)
-            
+            contains_month = reduce(
+                lambda result, month: result or relative_date_string.lower().find(month) != -1,
+                months, False)
+
             if contains_month:
-                # TODO: Is it enough to just check for month names to determine if a 
+                # TODO: Is it enough to just check for month names to determine if a
                 #       date_string specifies a particular date?
 
                 # If date is specified explicity, and year is not
                 # roll back 1 year
-                return datetime(parsed_absolute_date.year-1, 
-                        parsed_absolute_date.month, parsed_absolute_date.day)
+                return datetime(parsed_absolute_date.year - 1,
+                                parsed_absolute_date.month, parsed_absolute_date.day)
             else:
                 # Use the relative datetime delta and roll back
                 delta = parsed_absolute_date - publication_date
-                num_weeks = int(delta.days/7)
-                and_num_days_after = 7 if delta.days%7 == 0 else delta.days%7
+                num_weeks = int(delta.days / 7)
+                and_num_days_after = 7 if delta.days % 7 == 0 else delta.days % 7
                 return publication_date - timedelta(weeks=num_weeks) - \
-                        timedelta(7-and_num_days_after)
+                    timedelta(7 - and_num_days_after)
         else:
-            # Return if date is in the past already or no publication_date is provided
+            # Return if date is in the past already or no publication_date is
+            # provided
             return parsed_absolute_date
     else:
         # Parse unsucessful
@@ -184,6 +185,8 @@ class Interpreter():
             " ".join(person_reporting_units))]
         self.structure_unit_lemmas = [t.lemma_ for t in self.nlp(
             " ".join(structure_reporting_units))]
+        self.household_lemmas = [t.lemma_ for t in self.nlp(
+            " ".join(["families", "households"]))]
         self.reporting_term_lemmas = self.person_term_lemmas + self.structure_term_lemmas
         self.reporting_unit_lemmas = self.person_unit_lemmas + self.structure_unit_lemmas
         self.relevant_article_lemmas = relevant_article_lemmas
@@ -295,9 +298,9 @@ class Interpreter():
         countries = set()
         if len(possible_entities) > 0:
             for c in possible_entities:
-                code = self.country_code(c)
+                code = self.city_subdivision_country(c)
                 if code:
-                    countries.add(code)
+                    countries.add(code['country'])
 
         return list(countries)
 
@@ -498,7 +501,8 @@ class Interpreter():
         # 2. Check date is not too far in the past vs. publication date:
         if publication_date and (publication_date - possible_date).days > 366:
             return False
-        # Otherwise return True; function can be expanded to consider other cases
+        # Otherwise return True; function can be expanded to consider other
+        # cases
         return True
 
     def basic_number(self, token):
@@ -544,11 +548,11 @@ class Interpreter():
         elif verb.lemma_ in self.person_term_lemmas:
             return self.person_unit_lemmas, Fact(verb, verb, verb.lemma_, "term")
 
-        elif verb.lemma_ == 'leave':
+        elif verb.lemma_ in ('leave', 'render', 'become'):
             children = verb.children
             obj_predicate = None
             for child in children:
-                if child.dep_ in ('oprd', 'dobj'):
+                if child.dep_ in ('oprd', 'dobj', 'acomp'):
                     obj_predicate = child
             if obj_predicate:
                 if obj_predicate.lemma_ in self.structure_term_lemmas:
@@ -635,7 +639,6 @@ class Interpreter():
         # Get simple or standard subjects and objects
         verb_objects = self.simple_subjects_and_objects(verb)
         # Special Cases
-
         # see if unit directly precedes verb
         if verb.i > 0:
             preceding = story[verb.i - 1]
@@ -659,6 +662,12 @@ class Interpreter():
                 ancestors = verb.ancestors
                 for anc in ancestors:
                     verb_objects.extend(self.simple_subjects_and_objects(anc))
+
+        #
+        if verb.dep_ in ("xcomp", "acomp", "ccomp"):
+            ancestors = verb.ancestors
+            for anc in ancestors:
+                verb_objects.extend(self.simple_subjects_and_objects(anc))
 
         # Look for 'pobj' in sentence
         if verb.dep_ == 'ROOT':
@@ -734,19 +743,22 @@ class Interpreter():
                 # Or if it is of the construction 'leave ____', then ____ is
                 # the following word
                 next_word = self.next_word(story, o)
-                if next_word and (next_word.i == verb.token.i or next_word.text == verb.lemma_.split(" ")[-1]):
-                    if search_type == self.structure_term_lemmas:
-                        unit = 'house'
-                    else:
-                        unit = 'person'
-                    quantity = Fact(o, o, o.lemma_, 'quantity')
-                    report = ExtractedReport([p.text for p in possible_locations], verb.lemma_,
-                                             unit, quantity, story.text)
-                    report.tag_spans = self.set_report_span(
-                        [verb, quantity, possible_locations])
-                    # report.display()
-                    reports.append(report)
-                    break
+                if next_word:
+                    if (next_word.i == verb.token.i or next_word.text == verb.lemma_.split(" ")[-1] \
+                            or (next_word.dep_ == 'auxpass' and self.next_word(story, next_word).i == verb.token.i) \
+                            or o.idx < verb.end_idx):
+                        if search_type == self.structure_term_lemmas:
+                            unit = 'Households'
+                        else:
+                            unit = 'People'
+                        quantity = Fact(o, o, o.lemma_, 'quantity')
+                        report = ExtractedReport([p.text for p in possible_locations], self.convert_term(verb),
+                                                 unit, quantity, story.text)
+                        report.tag_spans = self.set_report_span(
+                            [verb, quantity, possible_locations])
+                        # report.display()
+                        reports.append(report)
+                        break
             elif o.lemma_ in search_type:
                 reporting_unit = o
                 noun_conj = self.test_noun_conj(sentence, o)
@@ -758,11 +770,10 @@ class Interpreter():
                 else:
                     # Try and get a number - begin search from noun.
                     quantity = self.get_quantity(sentence, o)
-
                 reporting_unit = Fact(
                     reporting_unit, reporting_unit, reporting_unit.lemma_, "unit")
-                report = ExtractedReport([p.text for p in possible_locations], verb.lemma_,
-                                         reporting_unit.lemma_, quantity, story.text)
+                report = ExtractedReport([p.text for p in possible_locations], self.convert_term(verb),
+                                         self.convert_unit(reporting_unit), quantity, story.text)
                 report.tag_spans = self.set_report_span(
                     [verb, quantity, reporting_unit, possible_locations])
                 reports.append(report)
@@ -776,6 +787,10 @@ class Interpreter():
         text = re.sub(r'(IMPACT)([a-zA-Z0-9])', r'\1. \2', text)
         text = re.sub(r'(RESPONSE)([a-zA-Z0-9])', r'\1. \2', text)
         text = re.sub(r'([a-zA-Z])(\d)', r'\1. \2', text)
+        text = re.sub(r'(\d)\s(\d)', r'\1\2', text)
+        text = text.replace('\r', ' ')
+        text = text.replace('  ', ' ')
+        text = text.replace("peole", "people")
         return text
 
     def extract_all_dates(self, story, publication_date=None):
@@ -788,6 +803,40 @@ class Interpreter():
             if abs_date and self.date_likelihood(abs_date, publication_date):
                 date_times.append(abs_date)
         return date_times
+
+    def convert_unit(self, reporting_unit):
+        if reporting_unit.lemma_ in self.structure_unit_lemmas:
+            return "Households"
+        elif reporting_unit.lemma_ in self.household_lemmas:
+            return "Households"
+        else:
+            return "People"
+
+    def convert_term(self, reporting_term):
+        reporting_term = reporting_term.text.split(" ")
+        reporting_term = [self.nlp(t)[0].lemma_ for t in reporting_term]
+        if "displace" in reporting_term:
+            return "Displaced"
+        elif "evacuate" in reporting_term:
+            return "Evacuated"
+        elif "flee" in reporting_term:
+            return "Forced to Flee"
+        elif "homeless" in reporting_term:
+            return "Homeless"
+        elif "camp" in reporting_term:
+            return "In Relief Camp"
+        elif len(set(reporting_term) & set(["shelter", "accommodate"])) > 0:
+            return "Sheltered"
+        elif "relocate" in reporting_term:
+            return "Relocated"
+        elif "destroy" in reporting_term:
+            return "Destroyed Housing"
+        elif "damage" in reporting_term:
+            return "Partially Destroyed Housing"
+        elif "uninhabitable" in reporting_term:
+            return "Uninhabitable Housing"
+        else:
+            return "Displaced"
 
     def process_article_new(self, story):
         """
