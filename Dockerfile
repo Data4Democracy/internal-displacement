@@ -8,9 +8,10 @@ RUN apt-get update
 RUN apt-get -y install python3 python3-pip python3-dev libxml2-dev \
         libxslt1-dev antiword unrtf poppler-utils pstotext tesseract-ocr \
         flac ffmpeg lame libmad0 libsox-fmt-mp3 sox libjpeg-dev \
-        postgresql libpq-dev git
+        postgresql libpq-dev git libffi-dev
 
 RUN pip3 install --upgrade pip && \
+    pip3 install NumPy SciPy spacy && \
     pip3 install git+git://github.com/aerkalov/ebooklib.git && \
     pip3 install textract
 
