@@ -4,7 +4,7 @@ services:
     build: docker/localdb
     image: localdb
   jupyter:
-    image: aneel/internal-displacement-jupyter:no-spacy
+    image: aneel/internal-displacement-jupyter:spacy
     command: sh -c "jupyter notebook --no-browser --ip=0.0.0.0 --port 3323 /internal-displacement/notebooks"
     stdin_open: true
     tty: true
