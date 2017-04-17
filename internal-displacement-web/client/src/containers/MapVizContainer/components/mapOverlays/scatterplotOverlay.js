@@ -1,7 +1,7 @@
 import React, {Component} from 'react';
 import DeckGL, {ScatterplotLayer} from 'deck.gl';
 
-export default class DeckGLOverlay extends Component {
+export default class ScatterLayer extends Component {
 
     static get defaultViewport() {
         return {
@@ -14,28 +14,33 @@ export default class DeckGLOverlay extends Component {
         };
     }
 
+    _initialize(gl) {
+        gl.enable(gl.DEPTH_TEST);
+        gl.depthFunc(gl.LEQUAL);
+    }
+
     render() {
-        const {viewport, maleColor, femaleColor, data, radius} = this.props;
+        console.log('rendering', DeckGL)
+        const {viewport,  data, radius} = this.props;
 
         if (!data) {
             return null;
         }
 
+        console.log('layer', data)
         const layer = new ScatterplotLayer({
             id: 'scatter-plot',
             data,
+            pickable: true,
             radiusScale: radius,
-            radiusMinPixels: 0.25,
+            radiusMinPixels: 10,
             getPosition: d => [d[0], d[1], 0],
-            getColor: d => d[2] === 1 ? maleColor : femaleColor,
             getRadius: d => 1,
-            updateTriggers: {
-                getColor: {c1: maleColor, c2: femaleColor}
-            }
+            getColor: d => "#1FBAD6"
         });
 
         return (
-            <DeckGL {...viewport} layers={ [layer] } />
+            <DeckGL {...viewport} layers={ [layer] } onWebGLInitialized={this._initialize} />
         );
     }
 }

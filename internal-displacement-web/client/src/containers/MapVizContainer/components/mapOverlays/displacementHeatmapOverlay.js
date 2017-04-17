@@ -28,12 +28,13 @@ const HeatMapOverlayRender = (param) => {
             width={width}
             height={height}
             zoom={zoom}
-            isDragging={true}
             locations={idData}
             dotRadius={4}
             globalOpacity={1}
             compositeOperation="screen"
             dotFill="#1FBAD6"
+            startDragLngLat={null}
+            isDragging={false}
             renderWhileDragging={true}
             lngLatAccessor={(data) => [data.get('long'), data.get('lat')]}
         />

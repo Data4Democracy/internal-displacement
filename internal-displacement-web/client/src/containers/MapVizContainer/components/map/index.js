@@ -6,7 +6,6 @@ import { MAPBOX_ACCESS_TOKEN } from './../../constants/mapConstants';
 import HeatMapOverlayRender from './../mapOverlays/displacementHeatmapOverlay';
 
 export const renderVisualizationOverlay = (data) => {
-    console.log(data, 'render vix overlay')
     //
     // const param = {
     //     props: this.props,
