@@ -1,4 +1,5 @@
 import hashlib
+import re
 from spacy.tokens import Token, Span
 from datetime import datetime
 
@@ -13,13 +14,118 @@ def convert_tokens_to_strings(value):
 
 
 def convert_quantity(value):
-    '''Convert an extracted quantity to an integer.
-    If unable to convert, return None.
+	
+	'''Convert an extracted quantity to an integer.
+    Solution forked from 
+	https://github.com/ghewgill/text2num/blob/master/text2num.py 
+	and enhanced with numerical and array input
     '''
-    try:
-        return int(value)
-    except ValueError:
-        return None
+	
+	Small = {
+	    'zero': 0,
+	    'one': 1,
+	    'two': 2,
+	    'three': 3,
+	    'four': 4,
+	    'five': 5,
+	    'six': 6,
+	    'seven': 7,
+	    'eight': 8,
+	    'nine': 9,
+	    'ten': 10,
+	    'eleven': 11,
+	    'twelve': 12,
+	    'thirteen': 13,
+	    'fourteen': 14,
+	    'fifteen': 15,
+	    'sixteen': 16,
+	    'seventeen': 17,
+	    'eighteen': 18,
+	    'nineteen': 19,
+	    'twenty': 20,
+	    'thirty': 30,
+	    'forty': 40,
+	    'fifty': 50,
+	    'sixty': 60,
+	    'seventy': 70,
+	    'eighty': 80,
+	    'ninety': 90
+	}
+
+	Magnitude = {
+	    'thousand':     1000,
+	    'million':      1000000,
+	    'billion':      1000000000,
+	    'trillion':     1000000000000,
+	    'quadrillion':  1000000000000000,
+	    'quintillion':  1000000000000000000,
+	    'sextillion':   1000000000000000000000,
+	    'septillion':   1000000000000000000000000,
+	    'octillion':    1000000000000000000000000000,
+	    'nonillion':    1000000000000000000000000000000,
+	    'decillion':    1000000000000000000000000000000000,
+	}
+	
+	Vague = {
+		'numbers':		5,
+	    'dozens':		55,
+	    'tens':			55,
+		'hundreds':		550,
+		'thousands':	5500,
+		'millions':		5500000,
+	    'billions':     5500000000,
+	    'trillions':    5500000000000,
+	    'quadrillions': 5500000000000000,
+	    'quintillions': 5500000000000000000,
+	    'sextillions':  5500000000000000000000,
+	    'septillions':  5500000000000000000000000,
+	    'octillions':   5500000000000000000000000000,
+	    'nonillions':   5500000000000000000000000000000,
+	    'decillions':   5500000000000000000000000000000000,
+	}
+
+	a = []
+	if not type(value) is list:
+		value = [value]
+	for s_item in value:
+		a += re.split(r"[\s-]+", str(s_item))
+		
+	n = 0
+	g = 0
+	vague_of = False
+	for w in a:
+		try:
+			x = int(w)
+			g += x
+		except:
+			if w.lower() == 'of':
+				vague_of = True
+				continue
+			
+			if vague_of:
+				if w[-1:] != 's':
+					w = w + 's'
+				if w == 'hundreds' or w == 'hundred':
+					g *= 100
+				elif w[:-1] in Magnitude:
+					g *= Magnitude[w[:-1]]
+				continue
+				
+			if w in Small:
+				g += Small[w]
+			elif w == "hundred" and g != 0:
+				g *= 100
+			elif w in Magnitude:
+				n += g * Magnitude[w]
+				g = 0
+			elif w in Vague:
+				g = Vague[w]
+			else:
+				return None
+				
+		vague_of = False
+		
+	return n + g
 
 
 class ExtractedReport:

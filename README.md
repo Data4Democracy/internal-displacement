@@ -104,11 +104,20 @@ be installed in a controlled, reproducible way.
    docker-compose up
    ```
 
-   Unfortunately, this will take quite a while the first time. It's fetching and building
+   or
+
+   ```
+   docker-compose -f docker-compose-spacy.yml up
+   ```
+
+   The `spacy` version will include the [en_core_web_md 1.2.1 NLP model](https://github.com/explosion/spacy-models)
+   It is multiple gigabytes in size. The one without the model is much smaller.
+
+   Either way, this will take some time the first time. It's fetching and building
    all of its dependencies. Subsequent runs should be much faster.
 
-   This will start up a couple of docker containers, one running postgres, and the other
-   running a Jupyter notebook server.
+   This will start up several docker containers, running postgres, a Jupyter notebook server, and the node.js
+   front end.
 
    In the output, you should see a line like:
    ```
@@ -116,10 +125,6 @@ be installed in a controlled, reproducible way.
    ```
 
    That URL will connect you to the Jupyter notebook server.
-
-
-3. Set up the database schema by running the contents of the
-[InitDB.ipynb](http://0.0.0.0:3323/notebooks/InitDB.ipynb) notebook.
 
 
 4. Visit the node.js server at [http://localhost:3322](http://localhost:3322)
@@ -133,7 +138,15 @@ number in the ports config to a free port on your system. eg. for 9999, make it:
       - "9999:3322"
 ```
 
-Note: If you want to add python dependencies, add them to `requirements.txt` and run `docker-compose up --build`.
+Note: If you want to add python dependencies, add them to `requirements.txt` and run the jupyter-dev version
+of the docker-compose file:
+
+```
+docker-compose -f docker-compose-dev.yml up --build
+```
+
+You'll need to use the jupyter-dev version until your dependencies are merged to master and a new version is
+built. Talk to @aneel on Slack if you need to do this.
 
 Note: if you want to run SQL commands againt the database directly, you can do
 that by starting a Terminal within Jupyter and running the PostgreSQL shell:
