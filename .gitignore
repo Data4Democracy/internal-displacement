@@ -11,7 +11,7 @@ id-tests.ipynb
 # Front end
 node_modules
 internal-displacement-web/dist
-classifiers/default_model.pkl
+internal_displacement/classifiers/default_model.pkl
 npm-debug.log
 
 # Misc
