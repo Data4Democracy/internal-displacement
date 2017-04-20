@@ -15,7 +15,9 @@ from internal_displacement.extracted_report import Fact
 from sklearn.externals import joblib
 from internal_displacement.article import Article
 from internal_displacement.model.model import Category
-
+from itertools import *
+from collections import Counter, OrderedDict
+import string
 
 def strip_accents(s):
     '''Strip out accents from text'''
@@ -34,7 +36,7 @@ def strip_words(place_name):
     '''
     place_name = place_name.lower()
     words_to_replace = {"the": "", "province": "",
-                        "county": "", "district": "", "city": ""}
+                        "county": "", "district": "", "city": "", "township": ""}
     rep = dict((re.escape(k), v) for k, v in words_to_replace.items())
     pattern = re.compile("|".join(rep.keys()))
     place_name = pattern.sub(lambda m: rep[re.escape(m.group(0))], place_name)
@@ -52,6 +54,97 @@ def mapzen_request(place_name):
     if len(j['features']) > 0:
         return j['features'][0]['properties']['country_a']
 
+def get_country_mapzen(city=None, subdivision=None, country=None, hints=[]):
+    '''Return geo coordinates by supplying location name
+    Parameters
+    ----------
+    city: string, default None
+    subdivision: string, default None
+    country: string, default None
+    hints: array, default [], other locations mentioned in the text that might
+           help identify the proper location 
+    Returns
+    -------
+    coordinates: string of comma separated lat an long
+    '''
+    if city in hints:
+        hints.remove(city)
+    def coords_tostring(coords_list, separator=','):
+        return separator.join(map(str,coords_list))
+    api_key = 'mapzen-neNu6xZ'
+    base_url = 'https://search.mapzen.com/v1/search'
+    
+    # turns all empty entities to none
+    place_units = [city, subdivision, country]
+    for unit in place_units:
+        if unit == '':
+            unit == None
+    
+    # creates the extra parameter in order to make sure
+    # we are looking for the correct type of location    
+    place_layers = 'locality'
+    if city is None:
+        place_layers = 'region'
+        if subdivision is None:
+            place_layers = 'country'
+    # creates the text parameter
+    place_name = ','.join([p for p in place_units if p is not None])
+
+    # makes a call to mapzen an retrieves the data
+    qry = {'text': place_name, 'api_key': api_key}
+    resp = requests.get(base_url, params = {'api_key': api_key, 
+                                            'text': place_name})
+    res = resp.json()
+    data = res["features"]
+
+    # if there are no results from the call ...
+    if len(data) == 0:
+        return None
+    # best case - there is just a single result ...
+    elif len(data) == 1:
+        return data[0]['properties']['country_a']
+
+    # most complicated case - there are multiple results
+    elif len(data) > 1:
+        # if there are hints, ry to make a best guess and 
+        # and if not - returns the first result in the list
+        data_filt = [data]
+        if len(hints) > 0:
+            layers_mapzen = {0:'locality', 1:'region', 2:'country'}
+            hints.append ('')
+            # creates a new list with indices of all missing items in 
+            # the places list
+            miss_idx = [i for i,v in enumerate(place_units) if v is None]
+            # creates a list of all the possible combinations
+            combs = list(permutations(hints, len(miss_idx)))
+            for comb in combs:
+                c = 0
+                for i, idx in enumerate(miss_idx):
+                    if comb[i] != '':
+                        # filters the dictionary based on the different options
+                        if c==0:
+                            # if it's a first valid iteration, the data source is
+                            # basically the raw dictionary
+                            data_filt.append([l for l in data 
+                                if layers_mapzen[idx] in l['properties'] 
+                                and l['properties'][layers_mapzen[idx]] == comb[i]])
+                        else:
+                            # if it's one of the later tierations, the data source
+                            # is the newly created filtered dictionary
+                            data_filt[-1] = [l for l in data_filt[-1] 
+                                if layers_mapzen[idx] in l['properties'] 
+                                and l['properties'][layers_mapzen[idx]] == comb[i]]
+                        c += 1
+                
+            # trying to get the best match (minimum number of results gt zero)
+            # creating a list with all the options filtered
+            data_filt = [d for d in data_filt if len(d) > 0]
+            data_filt = sorted(data_filt, key=lambda k: len(k))
+        if 'country_a' in data_filt[0][0]['properties'].keys():
+            coords = data_filt[0][0]['properties']['country_a']
+        else:
+            coords = None
+        return coords
 
 def common_names(place_name):
     '''Convert countries or places with commonly used names
@@ -94,11 +187,11 @@ def match_country_name(place_name):
             break
         # In some cases the country name has the form Congo, The Democratic Republic of the
         # which may be hard to match directly
-        elif re.match(r'\D+,\s{1}', country.name):
-            common = re.search(r'(\D+),\s{1}', country.name).groups()[0]
-            if common in place_name:
-                return country.alpha_3
-                break
+        # elif re.match(r'\D+,\s{1}', country.name):
+        #     common = re.search(r'(\D+),\s{1}', country.name).groups()[0]
+        #     if common in place_name:
+        #         return country.alpha_3
+        #         break
 
 
 def get_absolute_date(relative_date_string, publication_date=None):
@@ -262,7 +355,7 @@ class Interpreter():
         else:
             return Category.OTHER
 
-    def city_subdivision_country(self, place_name):
+    def city_subdivision_country(self, place_name, hints):
         '''Return dict with city (if applicable), subdivision (if applicable),
         and the ISO-3166 alpha_3 country code for a given place name.
         Return None if the country cannot be identified.
@@ -281,6 +374,10 @@ class Interpreter():
         if country_code:
             return {'city': place_name, 'subdivision': None,
                     'country': pycountry.countries.get(alpha_2=country_code).alpha_3}
+
+        mapzen_code = get_country_mapzen(place_name, hints=hints)
+        if mapzen_code:
+            return {'country': mapzen_code}
         return None
 
     def extract_countries(self, article):
@@ -289,20 +386,27 @@ class Interpreter():
         mentioned countries
         '''
         doc = self.nlp(u"{}".format(article))
-        possible_entities = set()
+        possible_entities = OrderedDict()
         for ent in doc.ents:
-            if ent.label_ in ('GPE', 'LOC'):
-                possible_entities.add(strip_words(ent.text))
-        possible_entities = set(possible_entities)
+            if ent.label_ in ('GPE', 'LOC', 'FAC', 'PERSON', 'NORP'):
+                ent_name = strip_words(ent.text)
+                if ent_name in possible_entities.keys():
+                    possible_entities[ent_name] += 1
+                else:
+                    possible_entities[ent_name] = 1
 
-        countries = set()
+        possible_entities = [k for k in possible_entities.keys()]
+        countries = Counter()
+        first_country = None
         if len(possible_entities) > 0:
             for c in possible_entities:
-                code = self.city_subdivision_country(c)
+                code = self.city_subdivision_country(c, hints=list(possible_entities))
                 if code:
-                    countries.add(code['country'])
+                    countries[code['country']] += 1
+                    if not first_country:
+                        first_country = code['country']
 
-        return list(countries)
+        return countries, first_country
 
     def test_token_equality(self, token_a, token_b):
         if token_a.i == token_b.i:
@@ -790,8 +894,13 @@ class Interpreter():
         text = re.sub(r'(\d)\s(\d)', r'\1\2', text)
         text = text.replace('\r', ' ')
         text = text.replace('  ', ' ')
+        text = text.replace('\n', ' ')
         text = text.replace("peole", "people")
-        return text
+        output = ''
+        for char in text:
+            if char in string.printable:
+                output += char
+        return output
 
     def extract_all_dates(self, story, publication_date=None):
         date_times = []
