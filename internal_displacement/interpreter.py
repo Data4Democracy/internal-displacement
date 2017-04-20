@@ -3,6 +3,7 @@ import pycountry
 import json
 import spacy
 import os
+import sys
 import textacy
 import unicodedata
 import requests
@@ -14,6 +15,10 @@ from internal_displacement.extracted_report import Fact
 from sklearn.externals import joblib
 from internal_displacement.article import Article
 from internal_displacement.model.model import Category
+
+module_path = os.path.abspath(os.path.join('..'))
+if module_path not in sys.path:
+    sys.path.append(module_path)
 
 
 def strip_accents(s):
@@ -154,15 +159,21 @@ class Interpreter():
         self.encoder = self.load_encoder(encoder_path=encoder_path)
 
     def load_classifier(self, model_path=None):
-        if model_path:
+        if model_path and os.path.isfile(model_path):
             clf = joblib.load(model_path)
         else:
-            default_model_path = '../classifiers/default_model.pkl'
+            default_model_path = './classifiers/default_model.pkl'
             if os.path.isfile(default_model_path):
                 clf = joblib.load(default_model_path)
             else:
                 url = 'https://www.dropbox.com/s/i2zb5uq4foocht4/default_model.pkl?dl=0'
                 r = requests.get(url, stream=True)
+                if not os.path.isfile(default_model_path):
+                    try:
+                        os.makedirs(os.path.dirname(default_model_path))
+                    except OSError as exc: # Guard against race condition
+                        if exc.errno != errno.EEXIST:
+                            raise
                 with open(default_model_path, 'wb') as f:
                     for chunk in r.iter_content(chunk_size=1024):
                         if chunk:  # filter out keep-alive new chunks
@@ -174,7 +185,7 @@ class Interpreter():
         if encoder_path:
             enc = joblib.load(encoder_path)
         else:
-            default_encoder_path = '../classifiers/default_encoder.pkl'
+            default_encoder_path = './classifiers/default_encoder.pkl'
             enc = joblib.load(default_encoder_path)
         return enc
 
