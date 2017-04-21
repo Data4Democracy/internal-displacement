@@ -355,7 +355,7 @@ class Interpreter():
         else:
             return Category.OTHER
 
-    def city_subdivision_country(self, place_name, hints):
+    def city_subdivision_country(self, place_name, hints=[]):
         '''Return dict with city (if applicable), subdivision (if applicable),
         and the ISO-3166 alpha_3 country code for a given place name.
         Return None if the country cannot be identified.
@@ -377,7 +377,7 @@ class Interpreter():
 
         mapzen_code = get_country_mapzen(place_name, hints=hints)
         if mapzen_code:
-            return {'country': mapzen_code}
+            return {'city': None, 'subdivision': None, 'country': mapzen_code}
         return None
 
     def extract_countries(self, article):
