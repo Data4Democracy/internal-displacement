@@ -160,100 +160,6 @@ def get_coordinates_mapzen(city=None, subdivision=None, country=None, use_layers
         return {u'coordinates': coords, u'flag': "multiple-results", u'country_code': c_code}
 
 
-def get_country_mapzen(city=None, subdivision=None, country=None, hints=[]):
-    '''Return geo coordinates by supplying location name
-    Parameters
-    ----------
-    city: string, default None
-    subdivision: string, default None
-    country: string, default None
-    hints: array, default [], other locations mentioned in the text that might
-           help identify the proper location 
-    Returns
-    -------
-    coordinates: string of comma separated lat an long
-    '''
-    if city in hints:
-        hints.remove(city)
-
-    def coords_tostring(coords_list, separator=','):
-        return separator.join(map(str, coords_list))
-    api_key = 'mapzen-neNu6xZ'
-    base_url = 'https://search.mapzen.com/v1/search'
-
-    # turns all empty entities to none
-    place_units = [city, subdivision, country]
-    for unit in place_units:
-        if unit == '':
-            unit == None
-
-    # creates the extra parameter in order to make sure
-    # we are looking for the correct type of location
-    place_layers = 'locality'
-    if city is None:
-        place_layers = 'region'
-        if subdivision is None:
-            place_layers = 'country'
-    # creates the text parameter
-    place_name = ','.join([p for p in place_units if p is not None])
-
-    # makes a call to mapzen an retrieves the data
-    qry = {'text': place_name, 'api_key': api_key}
-    resp = requests.get(base_url, params={'api_key': api_key,
-                                          'text': place_name})
-    res = resp.json()
-    data = res["features"]
-
-    # if there are no results from the call ...
-    if len(data) == 0:
-        return None
-    # best case - there is just a single result ...
-    elif len(data) == 1:
-        return data[0]['properties']['country_a']
-
-    # most complicated case - there are multiple results
-    elif len(data) > 1:
-        # if there are hints, ry to make a best guess and
-        # and if not - returns the first result in the list
-        data_filt = [data]
-        if len(hints) > 0:
-            layers_mapzen = {0: 'locality', 1: 'region', 2: 'country'}
-            hints.append('')
-            # creates a new list with indices of all missing items in
-            # the places list
-            miss_idx = [i for i, v in enumerate(place_units) if v is None]
-            # creates a list of all the possible combinations
-            combs = list(permutations(hints, len(miss_idx)))
-            for comb in combs:
-                c = 0
-                for i, idx in enumerate(miss_idx):
-                    if comb[i] != '':
-                        # filters the dictionary based on the different options
-                        if c == 0:
-                            # if it's a first valid iteration, the data source is
-                            # basically the raw dictionary
-                            data_filt.append([l for l in data
-                                              if layers_mapzen[idx] in l['properties']
-                                              and l['properties'][layers_mapzen[idx]] == comb[i]])
-                        else:
-                            # if it's one of the later tierations, the data source
-                            # is the newly created filtered dictionary
-                            data_filt[-1] = [l for l in data_filt[-1]
-                                             if layers_mapzen[idx] in l['properties']
-                                             and l['properties'][layers_mapzen[idx]] == comb[i]]
-                        c += 1
-
-            # trying to get the best match (minimum number of results gt zero)
-            # creating a list with all the options filtered
-            data_filt = [d for d in data_filt if len(d) > 0]
-            data_filt = sorted(data_filt, key=lambda k: len(k))
-        if 'country_a' in data_filt[0][0]['properties'].keys():
-            coords = data_filt[0][0]['properties']['country_a']
-        else:
-            coords = None
-        return coords
-
-
 def common_names(place_name):
     '''Convert countries or places with commonly used names
     to their official names
@@ -480,10 +386,6 @@ class Interpreter():
             country = pycountry.countries.get(alpha_2=country_code)
             return {'city': place_name, 'subdivision': None,
                     'country_code': country.alpha_3, 'country_name': country.name}
-
-        # mapzen_code = get_country_mapzen(place_name, hints=hints)
-        # if mapzen_code:
-        # return {'city': None, 'subdivision': None, 'country': mapzen_code}
         return None
 
     def extract_countries(self, article):
@@ -502,16 +404,27 @@ class Interpreter():
                     possible_entities[ent_name] = 1
 
         possible_entities = [k for k in possible_entities.keys()]
+        hints = possible_entities.copy()
+
         countries = Counter()
         first_country = None
+
         if len(possible_entities) > 0:
             for c in possible_entities:
-                code = self.city_subdivision_country(
-                    c, hints=list(possible_entities))
-                if code:
-                    countries[code['country']] += 1
+                #Try and get the country using "offline" methods
+                country_info = self.city_subdivision_country(c)
+                if country_info:
+                    countries[country_info['country_code']] += 1
                     if not first_country:
-                        first_country = code['country']
+                        first_country = country_info['country_code']
+
+                else:
+                    c_info = get_coordinates_mapzen(c, use_layers=False, hints=hints)
+                    country_code = c_info['country_code']
+                    if country_code != '':
+                        countries[country_code] += 1
+                        if not first_country:
+                            first_country = country_code
 
         return countries, first_country
 
