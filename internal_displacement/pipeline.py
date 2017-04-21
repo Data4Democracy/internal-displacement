@@ -1,5 +1,5 @@
 import csv
-from internal_displacement.interpreter import Interpreter
+from internal_displacement.interpreter import Interpreter, get_coordinates_mapzen
 from internal_displacement.model.model import Status, Session, Category, Article, Content, Country, CountryTerm, \
     Location, Report, ReportDateSpan, ArticleCategory, Base
 import concurrent
@@ -141,103 +141,6 @@ def sample_urls(urls, size=0.25, random=True):
         return urls[:sample_size]
 
 
-"""
-Coordinates extraction functions
-"""
-
-def get_coordinates_mapzen(city=None, subdivision=None, country=None, hints=[]):
-    '''Return geo coordinates by supplying location name
-    Parameters
-    ----------
-    city: string, default None
-    subdivision: string, default None
-    country: string, default None
-    hints: array, default [], other locations mentioned in the text that might
-           help identify the proper location 
-
-    Returns
-    -------
-    coordinates: string of comma separated lat an long
-    '''
-    
-    def coords_tostring(coords_list, separator=','):
-        return separator.join(map(str,coords_list))
-    
-    api_key = 'mapzen-neNu6xZ'
-    base_url = 'https://search.mapzen.com/v1/search'
-    
-    # turns all empty entities to none
-    place_units = [city, subdivision, country]
-    for unit in place_units:
-        if unit == '':
-            unit == None
-    
-    # creates the extra parameter in order to make sure
-    # we are looking for the correct type of location    
-    place_layers = 'locality'
-    if city is None:
-        place_layers = 'region'
-        if subdivision is None:
-            place_layers = 'country'
-    
-    # creates the text parameter
-    place_name = ','.join([p for p in place_units if p is not None])
-
-    # makes a call to mapzen an retrieves the data
-    qry = {'text': place_name, 'api_key': api_key}
-    resp = requests.get(base_url, params = {'api_key': api_key, 
-                                            'text': place_name,
-                                            'layers':place_layers})
-    res = resp.json()
-    data = res["features"]
-
-    # if there are no results from the call ...
-    if len(data) == 0:
-	    return {u'coordinates':'', u'flag':"no-results"}
-    # best case - there is just a single result ...
-    elif len(data) == 1:
-        return {u'coordinates':coords_tostring(data[0]['geometry']['coordinates']),
-                u'flag':"single-result"}
-    # most complicated case - there are multiple results
-    elif len(data) > 1:
-        # if there are hints, ry to make a best guess and 
-        # and if not - returns the first result in the list
-        data_filt = [data]
-        if len(hints) > 0:
-            layers_mapzen = {0:'locality', 1:'region', 2:'country'}
-            hints.append ('')
-            # creates a new list with indices of all missing items in 
-            # the places list
-            miss_idx = [i for i,v in enumerate(place_units) if v is None]
-            # creates a list of all the possible combinations
-            combs = list(permutations(hints, len(miss_idx)))
-            for comb in combs:
-                c = 0
-                for i, idx in enumerate(miss_idx):
-                    if comb[i] != '':
-                        # filters the dictionary based on the different options
-                        if c==0:
-                            # if it's a first valid iteration, the data source is
-                            # basically the raw dictionary
-                            data_filt.append([l for l in data 
-                                if layers_mapzen[idx] in l['properties'] 
-                                and l['properties'][layers_mapzen[idx]] == comb[i]])
-                        else:
-                            # if it's one of the later tierations, the data source
-                            # is the newly created filtered dictionary
-                            data_filt[-1] = [l for l in data_filt[-1] 
-                                if layers_mapzen[idx] in l['properties'] 
-                                and l['properties'][layers_mapzen[idx]] == comb[i]]
-                        c += 1
-                
-            # trying to get the best match (minimum number of results gt zero)
-            # creating a list with all the options filtered
-            data_filt = [d for d in data_filt if len(d) > 0]
-            data_filt = sorted(data_filt, key=lambda k: len(k))
-        coords = coords_tostring(data_filt[0][0]['geometry']['coordinates'])
-        return {u'coordinates': coords, u'flag':"multiple-results"}
-
-
 class Pipeline(object):
     """
     Interface for article processing
@@ -264,6 +167,7 @@ class Pipeline(object):
             return "Processed: Not in English"
         # Try and extract reports
         self.fetch_reports(article)
+        self.update_locations(article)
         # Set the relevance status
         status = len(article.reports) > 0
         article.relevance = status
@@ -380,18 +284,37 @@ class Pipeline(object):
             loc_dict = self.interpreter.city_subdivision_country(location)
             if loc_dict:
                 country = self.session.query(Country).filter_by(
-                    code=loc_dict['country']).one_or_none()
-                latlong = get_coordinates_mapzen(loc_dict['city'],
-											    loc_dict['subdivision'],
-												loc_dict['country'])
+                    code=loc_dict['country_code']).one_or_none()
                 location = Location(description=location,
                                     city=loc_dict['city'],
                                     subdivision=loc_dict['subdivision'],
-                                    country=country,
-                                    latlong=latlong.coordinates)
-                self.session.add(location)
-                self.session.commit()
-                report.locations.append(location)
+                                    country=country)
+            else:
+                location = Location(description=location)
+
+            self.session.add(location)
+            self.session.commit()
+            report.locations.append(location)
+
+    def update_locations(self, article):
+        # Get unique list of all locations mentioned in reports in article
+        locs = list(set([loc for report in article.reports for loc in report.locations]))
+        # Get names of all mentioned locations to use as hints
+        location_names = [l.description for l in locs]
+        for l in locs:
+            # If no lat-long, try and update
+            if not l.latlong or l.latlong == '':
+                # If country has already been identified, use existing information
+                if l.country:
+                    country_name = l.country.terms[0].term
+                    coords = get_coordinates_mapzen(city=l.city, subdivision=l.subdivision, country=country_name, use_layers=True, hints=location_names)
+                else:
+                    coords = get_coordinates_mapzen(l.description, use_layers=False, hints=location_names)
+                    country = self.session.query(Country).filter_by(code=coords['country_code']).one_or_none()
+                    l.country=country
+                l.latlong=coords["coordinates"]
+        self.session.commit()
+
 
     def categorize(self, article):
         '''Categorize the report
