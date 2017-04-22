@@ -1,11 +1,14 @@
 import React, {Component} from 'react';
-import { dummyMapData} from '../Api/api';
+import { dummyMapData, reportLocationData} from '../Api/api';
 
 class MapVizPage extends Component {
 	componentDidMount() {
 		dummyMapData().then(data => {
 			console.log(data);
 		});
+        reportLocationData().then(data => {
+        	console.log('report llocation data', data);
+		})
 	}
 
 	render() {
