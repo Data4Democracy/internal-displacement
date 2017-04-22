@@ -7,7 +7,9 @@
     "react-scripts": "0.9.5"
   },
   "dependencies": {
+    "babel-polyfill": "^6.23.0",
     "bootstrap": "^3.3.7",
+    "d3": "^4.8.0",
     "deck.gl": "^4",
     "immutable": "^3.8.1",
     "luma.gl": "^3.0.0",
@@ -21,8 +23,7 @@
     "react-router": "^2.6.0",
     "react-router-redux": "^4.0.8",
     "redux": "^3.6.0",
-    "redux-saga": "^0.14.6",
-    "babel-polyfill":"^6.23.0"
+    "redux-saga": "^0.14.6"
   },
   "scripts": {
     "start": "react-scripts start",

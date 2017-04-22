@@ -32,11 +32,13 @@ export default class ScatterLayer extends Component {
             id: 'scatter-plot',
             data,
             pickable: true,
-            radiusScale: radius,
-            radiusMinPixels: 10,
-            getPosition: d => [d[0], d[1], 0],
-            getRadius: d => 1,
-            getColor: d => "#1FBAD6"
+            //radiusScale: radius,
+            radiusMinPixels: 2,
+            radiusMaxPixels: 280,
+            // radiusMinPixels
+            getPosition: d => d.position,
+            getRadius: d => d.radius,
+            getColor: d => [0,0,0,100]
         });
 
         return (

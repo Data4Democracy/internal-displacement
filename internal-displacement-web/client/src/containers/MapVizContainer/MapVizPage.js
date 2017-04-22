@@ -1,20 +1,23 @@
 import React, {Component} from 'react';
+import {render} from 'react-dom';
+
 import { dummyMapData, testDB} from './../../Api/api';
 import './mapbox-gl.css'; //importing here since there are issues with webpack building mapbox-gl
 import './mapVis.css';
+
+import mapboxgl from 'mapbox-gl';
+
 import  {RenderMap } from './components/map';
 import {loadIDData, updateMap} from './actions';
 import {createStore} from 'react-redux';
-import "babel-polyfill";
-import MapGL, {autobind} from 'react-map-gl';
 
-import DeckGL, {LineLayer} from 'deck.gl';
-// const store = createStore(mapReducer);
-// import MapboxGLMap from 'react-map-gl';
+import "babel-polyfill";
+import MapGL from 'react-map-gl';
+
+
 import { MAPBOX_ACCESS_TOKEN } from './constants/mapConstants';
-import HeatMapOverlayRender from './components/mapOverlays/displacementHeatmapOverlay';
-import {DeckGLOverlay} from './components/mapOverlays/geojsonDataOverlay';
-import ScatterLayer from './components/mapOverlays/scatterplotOverlay';
+import GeojsonCustomOverlay from './components/mapOverlays/geojsonDataOverlay';
+
 class MapVizPage extends  Component {
     constructor(props) {
         super(props);
@@ -23,30 +26,31 @@ class MapVizPage extends  Component {
             data: null,
             // mapData: [],
             viewport: {
-                latitude: 0,
-                longitude: 0,
-                zoom: 0,
+                ...GeojsonCustomOverlay.defaultViewport,
                 startDragLngLat: null,
                 isDragging: false,
                 width: window.innerWidth,
                 height: window.innerHeight,
-            }
+            },
+            maxRadius: 20,
+            radiusAccessor: 'count'
         };
         window.addEventListener('resize', () => this.setState({width: window.innerWidth}));
     }
 
     componentDidMount() {
+        window.addEventListener('resize', this._resize.bind(this));
+        console.log(mapboxgl, 'mapbox exists?', window)
+        this._resize();
         let self = this;
     // componentDidMount() {
         dummyMapData().then(data => {
             console.log('data', self.state, self.setState);
             let parsed = JSON.parse(data).rows;
             // this.props.dispatch(loadIDData(data))
-            self.setState({data: parsed.map(d => [d.long, d.lat])})
-            // self.setState({data: parsed})
+            self.setState({data: parsed})
         });
 
-        // console.log(RenderMap)
     }
 
     _resize() {
@@ -56,39 +60,8 @@ class MapVizPage extends  Component {
         });
     }
 
-    // render() {
-    //     let mapProps = {
-    //         ...this.state.viewport,
-    //         ...this.state.mapData
-    //     };
-    //     console.log(mapProps);
-    //
-    //     return (
-    //
-    //         RenderMap(mapProps)
-    //
-    //     )
-    // }
-
     render() {
-        let mapProps = {
-            ...this.state.viewport,
-            // ...this.state.mapData
-        };
-        const {viewport, data} = this.state;
-
-        // return (
-        //     <MapGL
-        //         {...viewport}
-        //         perspectiveEnabled={true}
-        //         onChangeViewport={this._onChangeViewport.bind(this)}
-        //         mapboxApiAccessToken={MAPBOX_ACCESS_TOKEN}>
-        //         <DeckGLOverlay viewport={viewport}
-        //                        data={data}
-        //                        radius={30}
-        //         />
-        //     </MapGL>
-        // );
+        const {viewport, data, maxRadius, radiusAccessor} = this.state;
 
         return (
             <MapGL
@@ -96,42 +69,18 @@ class MapVizPage extends  Component {
                 perspectiveEnabled={true}
                 onChangeViewport={this._onChangeViewport.bind(this)}
                 mapboxApiAccessToken={MAPBOX_ACCESS_TOKEN}>
-                <ScatterLayer viewport={viewport}
-                               data={data}
-                               radius={30}
+
+                <GeojsonCustomOverlay
+                    viewport={viewport}
+                    data={data}
+                    radiusAccessor={radiusAccessor}
+                    maxRadius={200}
                 />
+                <div>Geojson Custom overlay</div>
             </MapGL>
         )
 
-        if ( !this.state.mapData || this.state.mapData.length === 0) {
-            return (
 
-                <MapGL
-                    mapboxApiAccessToken={MAPBOX_ACCESS_TOKEN}
-                    {...mapProps}
-                    perspectiveEnabled={true}
-                    onChangeViewport={this._onChangeViewport.bind(this)}
-
-                    mapStyle='mapbox://styles/mapbox/light-v9'
-
-                >
-                    <div>Map rendering</div>
-                </MapGL>
-            );
-        }
-
-        return (
-
-            <MapGL
-                mapboxApiAccessToken={MAPBOX_ACCESS_TOKEN}
-                {...mapProps}
-                mapStyle='mapbox://styles/mapbox/light-v9'
-            >
-
-                    {HeatMapOverlayRender({...this.state.viewport, mapData: this.state.mapData}) }
-
-            </MapGL>
-        );
     }
 
     _onChangeViewport(viewport) {

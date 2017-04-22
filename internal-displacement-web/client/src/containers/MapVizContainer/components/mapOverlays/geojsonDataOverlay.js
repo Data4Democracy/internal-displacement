@@ -1,17 +1,10 @@
 import React, {Component} from 'react';
 import 'babel-polyfill';
 import DeckGL, {GeoJsonLayer} from 'deck.gl';
+import * as d3 from 'd3';
+import {convertArrToGeojsonPoints} from './../../../../utils/convertDataToGeojson';
 
-const LIGHT_SETTINGS = {
-    lightsPosition: [-125, 50.5, 5000, -122.8, 48.5, 8000],
-    ambientRatio: 0.2,
-    diffuseRatio: 0.5,
-    specularRatio: 0.3,
-    lightsStrength: [1.0, 0.0, 2.0, 0.0],
-    numberOfLights: 2
-};
-
-export default class DeckGLOverlay extends Component {
+export default class GeojsonCustomOverlay extends Component {
 
     static get defaultViewport() {
         return {
@@ -29,37 +22,50 @@ export default class DeckGLOverlay extends Component {
         gl.depthFunc(gl.LEQUAL);
     }
 
-    render() {
-        const {viewport, mapData, radiusScale} = this.props;
+    _getRadiusScale(maxRadius, maxDataValue) {
+        return d3.scaleSqrt().domain([0, maxDataValue]).range([20, maxRadius])
+    }
 
-        if (!mapData) {
+    render() {
+        const {viewport, data, maxRadius, radiusAccessor} = this.props;
+
+        if (!data) {
             return null;
         }
 
+        console.log('rendering data')
+
+        let maxRadiusData = d3.max(data,  d => d[radiusAccessor]);
+        let radiusScale = this._getRadiusScale(maxRadius, 50);
+        // let radiusScale = this._getRadiusScale(maxRadius, maxRadiusData);
+        data.forEach(d => {
+            d.radius = 50,//radiusScale(d.count);
+            d.color =  [31, 186, 214, 255]
+        });
+        let geojsonMapData = convertArrToGeojsonPoints(data, 'long', 'lat');
+
+        let testData = {
+            "type": "FeatureCollection",
+            "features": geojsonMapData.features.slice(0,5)
+        };
+
+        console.log('geojson', geojsonMapData, JSON.stringify(testData));
+
         const layer = new GeoJsonLayer({
             id: 'geojson',
-            data: mapData,
-            opacity: 0.5,
-            radiusScale: 4,
-            radiusMinPixels: 0.25,
-            getPosition: d => [d[0], d[1], 0],
-            getRadius: d => 5,
-            getColor: d => "#1FBAD6",
+            data: geojsonMapData,
+            opacity: 0.8,
+            visible: true,
             // stroked: false,
-            // filled: true,
-            // extruded: true,
-            // wireframe: true,
-            // fp64: true,
-            // getElevation: f => Math.sqrt(f.properties.valuePerSqm) * 10,
-            // getFillColor: f => colorScale(f.properties.growth),
-            // getLineColor: f => [255, 255, 255],
-            lightSettings: LIGHT_SETTINGS,
-            pickable: Boolean(this.props.onHover),
-            onHover: this.props.onHover
+            filled: true,
+            getRadius: d => d.properties.radius,
+            getFillColor: d => [31, 186, 214, 100],
+            // pickable: true,
+            // onHover: () => {console.log('on hohver')}//this.props.onHover
         });
 
         return (
             <DeckGL {...viewport} layers={ [layer] } onWebGLInitialized={this._initialize} />
-        );
+                );
     }
 }
