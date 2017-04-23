@@ -15,6 +15,7 @@ module.exports = function (app) {
     // Insert routes below
     app.use('/api/test', require('./api/test'));
     app.use('/api/testDB', require('./api/sampleArticleRequest'));
+    app.use('/api/report-location-data', require('./api/reportLocationRequest'));
 
     // All other routes should redirect to the index.html
     app.route('/')
