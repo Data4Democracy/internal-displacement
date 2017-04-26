@@ -181,7 +181,7 @@ class Fact(object):
         if full_span:
             self.text = full_span.text
         else:
-            self.text = ''
+            self.text = token.text
         self.lemma_ = lemma_
         # Set the start index
         if isinstance(token, Token):
