@@ -180,8 +180,10 @@ class Fact(object):
         self.type_ = fact_type
         if full_span:
             self.text = full_span.text
-        else:
+        elif token:
             self.text = token.text
+        else:
+            self.text = ''
         self.lemma_ = lemma_
         # Set the start index
         if isinstance(token, Token):

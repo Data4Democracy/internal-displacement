@@ -1,6 +1,7 @@
 '''Implement functions for adapting the broader solution to processing of specific fragments and excerpts.'''
 
 import re
+import string
 import os
 import sys
 module_path = os.path.abspath(os.path.join('..'))
@@ -8,16 +9,38 @@ if module_path not in sys.path:
     sys.path.append(module_path)
 from internal_displacement.extracted_report import convert_quantity
 from sklearn.externals import joblib
+from collections import Counter
+import numpy as np
+
+
+class MeanEmbeddingVectorizer(object):
+
+    def __init__(self, w2v):
+        self.w2v = w2v
+        # if a text is empty we should return a vector of zeros
+        # with the same dimensionality as all the other vectors
+        self.dim = (300,)
+
+    def fit(self, X, y):
+        return self
+
+    def transform(self, X):
+        return np.array([
+            np.mean([self.w2v[w] for w in words if w in self.w2v]
+                    or [np.zeros(self.dim)], axis=0)
+            for words in X
+        ])
 
 
 class Helper(object):
 
-    def __init__(self, nlp):
+    def __init__(self, nlp, unit_vec_path, unit_model_path, term_vec_path, term_model_path, term_svc_path):
         self.nlp = nlp
-        self.reporting_unit_vectorizer = self.load_external('')
-        self.reporting_term_vectorizer = self.load_external('')
-        self.reporting_unit_classifier = self.load_external('')
-        self.reporting_term_classifier = self.load_external('')
+        self.reporting_unit_vectorizer = self.load_external(unit_vec_path)
+        self.reporting_term_vectorizer = self.load_external(term_vec_path)
+        self.reporting_unit_classifier = self.load_external(unit_model_path)
+        self.reporting_term_classifier = self.load_external(term_model_path)
+        self.reporting_term_svc = self.load_external(term_svc_path)
 
     def load_external(self, path):
         mod = joblib.load(path)
@@ -71,13 +94,13 @@ class Helper(object):
             return True
 
     def minimum_loc(self, spans):
-    '''Find the first character location in text for each report
-    '''
-    locs = []
-    for s in spans:
-        if s['type'] != 'loc':
-            locs.append(s['start'])
-    return min(locs)
+        '''Find the first character location in text for each report
+        '''
+        locs = []
+        for s in spans:
+            if s['type'] != 'loc':
+                locs.append(s['start'])
+        return min(locs)
 
     def choose_report(self, reports):
         '''Choose report based on the heuristics mentioned in the first cell
@@ -112,13 +135,19 @@ class Helper(object):
             report_locs.append((report, self.minimum_loc(report.tag_spans)))
         return sorted(report_locs, key=lambda x: x[1])[0][0]
 
-    def choose_report(self, reports):
-    '''Get reports based on Excerpt and choose the most relevant one'''
+    def get_report(self, reports):
+        '''Get reports based on Excerpt and choose the most relevant one'''
         if len(reports) > 0:
             report = self.choose_report(reports)
             return report.quantity, report.event_term, report.subject_term, report.locations
         else:
             return 0, '', '', ''
+
+    def combine_probabilities(self, p1, p2, classes):
+        combined_probs = np.mean(np.array([p1, p2]), axis=0)
+        predicted_indices = [np.argmax(arr) for arr in list(combined_probs)]
+        predictions = [classes[i] for i in predicted_indices]
+        return predictions
 
     def combine_predictions(self, classifier, rules):
         if classifier == rules:
@@ -128,23 +157,32 @@ class Helper(object):
         else:
             return rules
 
-    def choose_country(self, countries, first_country=''):
+    def choose_country(self, countries):
         '''Choose country out of possible countries
         Either return the most commonly mentioned country
         or the first country found
         '''
 
         if len(countries) == 0:
-            return ''
-        if len(countries) <= 1:
-            return countries.most_common()[0][0]
+            return '', ''
+        if len(countries) == 1:
+            return countries[0]['location_text'], countries[0]['country_code']
         else:
-            country_counts = list(countries.values())
+            country_counter = Counter()
+            for country in countries:
+                country_counter[country['country_code']] += 1
+            country_counts = list(country_counter.values())
             max_count = max(country_counts)
             if country_counts.count(max_count) > 1:
-                return first_country
+                sorted_countries = sorted(
+                    countries, key=lambda k: k['order'])[0]
+                return sorted_countries['location_text'], sorted_countries['country_code']
             else:
-                return countries.most_common()[0][0]
+                country_subset = [d for d in countries if d[
+                    'country_code'] == country_counter.most_common()[0][0]]
+                sorted_countries = sorted(
+                    country_subset, key=lambda k: k['order'])[0]
+                return sorted_countries['location_text'], sorted_countries['country_code']
 
     def get_closest_number(self, possible_numbers, possible_units):
         '''Get closest number in text to word that most closely matches the given unit'''
@@ -167,7 +205,7 @@ class Helper(object):
             lemmas = person_lemmas
         else:
             lemmas = household_lemmas
-        doc = nlp(text)
+        doc = self.nlp(text)
         possible_numbers = []
         possible_units = []
         for token in doc:
@@ -196,3 +234,53 @@ class Helper(object):
             return r2
         else:
             return 0
+
+    def get_unique_tag_spans(self, reports):
+        '''Get a list of unique token spans
+        for visualizing a complete article along
+        with all extracted facts.
+        Each extracted report has its own list of spans
+        which may in some cases overlap, particularly
+        for date and location tags.
+        '''
+        # need to deal with overlapping spans
+        all_spans = []
+        for report in reports:
+            all_spans.extend(report.tag_spans)
+        unique_spans = list({v['start']: v for v in all_spans}.values())
+        unique_spans = sorted(unique_spans, key=lambda k: k['start'])
+        # Check for no overlap
+        non_overlapping_spans = []
+        current_start = -1
+        current_end = -1
+        for span in unique_spans:
+            if span['start'] > current_end:
+                non_overlapping_spans.append(span)
+                current_start, current_end = span['start'], span['end']
+            else:
+                # Create a new merged span and add it to the end of the result
+                current_last_span = non_overlapping_spans[-1]
+                new_span = {}
+                new_span['type'] = ", ".join(
+                    [current_last_span['type'], span['type']])
+                new_span['start'] = current_last_span['start']
+                new_span['end'] = max(current_last_span['end'], span['end'])
+                non_overlapping_spans[-1] = new_span
+                current_end = new_span['end']
+
+        return non_overlapping_spans
+
+    def tag_text(self, text, spans):
+        text_blocks = []
+        text_start_point = 0
+        for span in spans:
+            text_blocks.append(text[text_start_point: span['start']])
+
+            tagged_text = '<mark data-entity="{}">'.format(
+                span['type'].lower())
+            tagged_text += text[span['start']: span['end']]
+            tagged_text += '</mark>'
+            text_blocks.append(tagged_text)
+            text_start_point = span['end']
+        text_blocks.append(text[text_start_point:])
+        return("".join(text_blocks))

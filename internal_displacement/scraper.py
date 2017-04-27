@@ -27,7 +27,7 @@ def is_pdf_simple_tests(url):
         content_type = page.getheader('Content-Type')
         if content_type == 'application/pdf':
             return url
-    except (urllib.error.HTTPError, urllib.error.URLError, UnicodeEncodeError):
+    except (urllib.error.HTTPError, urllib.error.URLError, UnicodeEncodeError, ValueError):
         pass
 
 
@@ -47,7 +47,7 @@ def is_pdf_iframe_test(url):
                     if 'http' in src:
                         if is_pdf_simple_tests(src):
                             return src
-    except (urllib.error.HTTPError, urllib.error.URLError, UnicodeEncodeError):
+    except (urllib.error.HTTPError, urllib.error.URLError, UnicodeEncodeError, ValueError):
         pass
 
 
@@ -132,7 +132,7 @@ class Scraper(object):
             pdf_file.write(response.read())
             pdf_file.close()
             return os.path.join('./', 'file_to_convert.pdf'), publish_date
-        except (urllib.error.HTTPError, urllib.error.URLError, UnicodeEncodeError) as e:
+        except (urllib.error.HTTPError, urllib.error.URLError, UnicodeEncodeError, ValueError) as e:
             return '', ''
 
     def get_body_text(self, url):

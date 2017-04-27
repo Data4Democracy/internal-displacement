@@ -406,27 +406,30 @@ class Interpreter():
         possible_entities = [k for k in possible_entities.keys()]
         hints = possible_entities.copy()
 
-        countries = Counter()
-        first_country = None
-
+        countries = []
+        order_ind = 1
         if len(possible_entities) > 0:
             for c in possible_entities:
-                #Try and get the country using "offline" methods
+                loc_info = {}
                 country_info = self.city_subdivision_country(c)
                 if country_info:
-                    countries[country_info['country_code']] += 1
-                    if not first_country:
-                        first_country = country_info['country_code']
+                    loc_info['location_text'] = c
+                    loc_info['country_code'] = country_info['country_code']
+                    loc_info['order'] = order_ind
+                    countries.append(loc_info)
+                    order_ind += 1
 
                 else:
                     c_info = get_coordinates_mapzen(c, use_layers=False, hints=hints)
                     country_code = c_info['country_code']
                     if country_code != '':
-                        countries[country_code] += 1
-                        if not first_country:
-                            first_country = country_code
+                        loc_info['location_text'] = c
+                        loc_info['country_code'] = country_code
+                        loc_info['order'] = order_ind
+                        countries.append(loc_info)
+                        order_ind += 1
 
-        return countries, first_country
+        return countries
 
     def test_token_equality(self, token_a, token_b):
         if token_a.i == token_b.i:
