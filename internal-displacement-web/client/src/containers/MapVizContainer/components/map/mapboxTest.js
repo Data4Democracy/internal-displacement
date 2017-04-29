@@ -5,10 +5,10 @@ import mapboxgl from 'mapbox-gl';
 import * as d3 from 'd3';
 import { MAPBOX_ACCESS_TOKEN } from './../../constants/mapConstants';
 
-export const renderMap = (data, containerID, centerLat = 0, centerLng = 0, zoom=0, maxCount, minCount, maxRadius, minRadius) => {
+export const renderMap = (data, containerID = 'map', centerLat = 0, centerLng = 0, zoom=0, maxCount, minCount, maxRadius, minRadius) => {
     mapboxgl.accessToken = MAPBOX_ACCESS_TOKEN;
     let map = new mapboxgl.Map({
-        container: 'containerID',
+        container: containerID,
         style: 'mapbox://styles/mapbox/light-v9',
         center: [centerLng, centerLat],
         zoom: zoom
