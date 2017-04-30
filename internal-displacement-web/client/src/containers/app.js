@@ -10,8 +10,7 @@ const propTypes = {
 export default class App extends React.Component {
   render() {
     return (
-      <div className="container-fluid text-center">
-        <Header />
+      <div className="container-fluid container-no-padding text-center">
         {this.props.children}
       </div>
     )

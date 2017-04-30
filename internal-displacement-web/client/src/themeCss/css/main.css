@@ -2682,7 +2682,7 @@ body.is-mobile.landing .wrapper.style4 {
 body.is-mobile.landing #footer {
   background-color: #f80013; }
 
-#homePage {
+#homePage, #banner {
   background-image: -moz-linear-gradient(top, rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url("/images/banner.jpg");
   background-image: -webkit-linear-gradient(top, rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url("/images/banner.jpg");
   background-image: -ms-linear-gradient(top, rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url("/images/banner.jpg");
@@ -2692,4 +2692,8 @@ body.is-mobile.landing #footer {
   background-repeat: no-repeat;
   background-size: cover;
   padding-top: 0;
+}
+
+.container-no-padding {
+  padding: 0;
 }
