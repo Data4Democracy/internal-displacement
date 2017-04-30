@@ -8,40 +8,39 @@ import pic3 from './../../themeCss/images/pic03.jpg';
 import pic4 from './../../themeCss/images/pic04.jpg';
 
 const HomePage = () => (
-	<div>
+	<div id="homePage">
 		<section id="banner">
 			<div className="inner">
 				<h2>Internal Displacement</h2>
-				<p><p>A Data for Democracy solution for the Unite Ideas IDETECT Challenge.</p>
-				</p>
+				<p>A Data for Democracy solution for the Unite Ideas IDETECT Challenge.</p>
 				<ul className="actions">
 				</ul>
 			</div>
 			<a href="#one" className="more scrolly">Learn More</a>
 		</section>
 
-<section id="one" className="wrapper style1 special">
-    <div className="inner">
-    <header className="major">
-    <h2>Tracking reports on internally displaced persons<br />
-With full scale pipeline and processing.</h2>
-<p>Features include: article retrieval, report extraction, <br />
-filtering, classNameification, information extraction, and visualization.</p>
-</header>
-<ul className="icons major">
-    <li><span className="icon fa-download major style2"><span className="label"></span></span></li>
-    <li><span className="icon fa-cogs major style2"><span className="label"></span></span></li>
-    <li><span className="icon fa-area-chart major style2"><span className="label"></span></span></li>
-    </ul>
-    </div>
-    </section>
-    <section id="two" className="wrapper alt style2">
-    <section className="spotlight">
-    <div className="image"><img src={pic1} alt="" /></div><div className="content">
-    <h2>Article processing</h2>
-<p>We have built a customized web scraping infrastructure to retrieve articles and extract content into a SQL database.</p>
-</div>
-</section>
+        <section id="one" className="wrapper style1 special">
+            <div className="inner">
+                <header className="major">
+                    <h2>Tracking reports on internally displaced persons<br />
+                    With full scale pipeline and processing.</h2>
+                    <p>Features include: article retrieval, report extraction, <br />
+                filtering, classNameification, information extraction, and visualization.</p>
+                </header>
+                <ul className="icons major">
+                    <li><span className="icon fa-download major style2"><span className="label"></span></span></li>
+                    <li><span className="icon fa-cogs major style2"><span className="label"></span></span></li>
+                    <li><span className="icon fa-area-chart major style2"><span className="label"></span></span></li>
+                    </ul>
+                    </div>
+        </section>
+        <section id="two" className="wrapper alt style2">
+            <section className="spotlight">
+            <div className="image"><img src={pic1} alt="" /></div><div className="content">
+            <h2>Article processing</h2>
+        <p>We have built a customized web scraping infrastructure to retrieve articles and extract content into a SQL database.</p>
+        </div>
+        </section>
 <section className="spotlight">
     <div className="image"><img src={pic2} alt="" /></div><div className="content">
     <h2>Natural Language</h2>
