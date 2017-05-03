@@ -16,6 +16,8 @@ from internal_displacement.extracted_report import Fact
 from sklearn.externals import joblib
 from internal_displacement.article import Article
 from internal_displacement.model.model import Category
+from gensim.corpora import Dictionary
+from gensim.models import TfidfModel, LsiModel
 
 module_path = os.path.abspath(os.path.join('..'))
 if module_path not in sys.path:
@@ -269,6 +271,10 @@ class Interpreter():
             return Category.CONFLICT
         else:
             return Category.OTHER
+
+    def lsi_transform(self, text):
+
+
 
     def city_subdivision_country(self, place_name):
         '''Return dict with city (if applicable), subdivision (if applicable),
