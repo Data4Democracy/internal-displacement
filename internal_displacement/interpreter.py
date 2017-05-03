@@ -16,8 +16,15 @@ from internal_displacement.extracted_report import Fact
 from sklearn.externals import joblib
 from internal_displacement.article import Article
 from internal_displacement.model.model import Category
+<<<<<<< HEAD
 from gensim.corpora import Dictionary
 from gensim.models import TfidfModel, LsiModel
+||||||| merged common ancestors
+=======
+from itertools import *
+from collections import Counter, OrderedDict
+import string
+>>>>>>> upstream/master
 
 module_path = os.path.abspath(os.path.join('..'))
 if module_path not in sys.path:
@@ -41,7 +48,7 @@ def strip_words(place_name):
     '''
     place_name = place_name.lower()
     words_to_replace = {"the": "", "province": "",
-                        "county": "", "district": "", "city": ""}
+                        "county": "", "district": "", "city": "", "township": ""}
     rep = dict((re.escape(k), v) for k, v in words_to_replace.items())
     pattern = re.compile("|".join(rep.keys()))
     place_name = pattern.sub(lambda m: rep[re.escape(m.group(0))], place_name)
@@ -58,6 +65,110 @@ def mapzen_request(place_name):
     j = json.loads(res_body.decode("utf-8"))
     if len(j['features']) > 0:
         return j['features'][0]['properties']['country_a']
+
+
+def get_coordinates_mapzen(city=None, subdivision=None, country=None, use_layers=True, hints=[]):
+    '''Return geo coordinates by supplying location name
+    Parameters
+    ----------
+    city: string, default None
+    subdivision: string, default None
+    country: string, default None
+    hints: array, default [], other locations mentioned in the text that might
+           help identify the proper location 
+
+    Returns
+    -------
+    coordinates: string of comma separated lat an long
+    '''
+    if city in hints:
+        hints.remove(city)
+
+    def coords_tostring(coords_list, separator=','):
+        return separator.join(map(str, coords_list))
+
+    api_key = 'mapzen-neNu6xZ'
+    base_url = 'https://search.mapzen.com/v1/search'
+
+    # turns all empty entities to none
+    place_units = [city, subdivision, country]
+    for unit in place_units:
+        if unit == '':
+            unit == None
+
+    # creates the extra parameter in order to make sure
+    # we are looking for the correct type of location
+    place_layers = 'locality'
+    if city is None:
+        place_layers = 'region'
+        if subdivision is None:
+            place_layers = 'country'
+
+    # creates the text parameter
+    place_name = ','.join([p for p in place_units if p is not None])
+
+    # makes a call to mapzen an retrieves the data
+    qry = {'text': place_name, 'api_key': api_key}
+    if use_layers:
+        resp = requests.get(base_url, params={'api_key': api_key,
+                                              'text': place_name,
+                                              'layers': place_layers})
+    else:
+        resp = requests.get(base_url, params={'api_key': api_key,
+                                              'text': place_name})
+
+    res = resp.json()
+    data = res["features"]
+
+    # if there are no results from the call ...
+    if len(data) == 0:
+        return {u'coordinates': '', u'flag': "no-results", u'country_code': ''}
+    # best case - there is just a single result ...
+    elif len(data) == 1:
+        return {u'coordinates': coords_tostring(data[0]['geometry']['coordinates']),
+                u'flag': "single-result", u'country_code': data[0]['properties']['country_a']}
+    # most complicated case - there are multiple results
+    elif len(data) > 1:
+        # if there are hints, ry to make a best guess and
+        # and if not - returns the first result in the list
+        data_filt = [data]
+        if len(hints) > 0:
+            layers_mapzen = {0: 'locality', 1: 'region', 2: 'country'}
+            hints.append('')
+            # creates a new list with indices of all missing items in
+            # the places list
+            miss_idx = [i for i, v in enumerate(place_units) if v is None]
+            # creates a list of all the possible combinations
+            combs = list(permutations(hints, len(miss_idx)))
+            for comb in combs:
+                c = 0
+                for i, idx in enumerate(miss_idx):
+                    if comb[i] != '':
+                        # filters the dictionary based on the different options
+                        if c == 0:
+                            # if it's a first valid iteration, the data source is
+                            # basically the raw dictionary
+                            data_filt.append([l for l in data
+                                              if layers_mapzen[idx] in l['properties']
+                                              and l['properties'][layers_mapzen[idx]] == comb[i]])
+                        else:
+                            # if it's one of the later tierations, the data source
+                            # is the newly created filtered dictionary
+                            data_filt[-1] = [l for l in data_filt[-1]
+                                             if layers_mapzen[idx] in l['properties']
+                                             and l['properties'][layers_mapzen[idx]] == comb[i]]
+                        c += 1
+
+            # trying to get the best match (minimum number of results gt zero)
+            # creating a list with all the options filtered
+            data_filt = [d for d in data_filt if len(d) > 0]
+            data_filt = sorted(data_filt, key=lambda k: len(k))
+        coords = coords_tostring(data_filt[0][0]['geometry']['coordinates'])
+        if 'country_a' in data_filt[0][0]['properties'].keys():
+            c_code = data_filt[0][0]['properties']['country_a']
+        else:
+            c_code = ''
+        return {u'coordinates': coords, u'flag': "multiple-results", u'country_code': c_code}
 
 
 def common_names(place_name):
@@ -78,8 +189,9 @@ def subdivision_country_code(place_name):
     subdivisions = (s for s in list(pycountry.subdivisions))
     for sub_division in subdivisions:
         if compare_strings(sub_division.name, place_name):
-            return sub_division.country.alpha_3
+            return sub_division.country.alpha_3, sub_division.country.name
             break
+    return None, None
 
 
 def match_country_name(place_name):
@@ -89,23 +201,17 @@ def match_country_name(place_name):
     countries = (c for c in list(pycountry.countries))
     for country in countries:  # Loop through all countries
         if country.name == place_name:  # Look directly at country name
-            return country.alpha_3
+            return country.alpha_3, country.name
             break
         # In some cases the country also has a common name
         elif hasattr(country, 'common_name') and country.common_name == place_name:
-            return country.alpha_3
+            return country.alpha_3, country.common_name
             break
         # In some cases the country also has an official name
         elif hasattr(country, 'official_name') and country.official_name == place_name:
-            return country.alpha_3
+            return country.alpha_3, country.name
             break
-        # In some cases the country name has the form Congo, The Democratic Republic of the
-        # which may be hard to match directly
-        elif re.match(r'\D+,\s{1}', country.name):
-            common = re.search(r'(\D+),\s{1}', country.name).groups()[0]
-            if common in place_name:
-                return country.alpha_3
-                break
+    return None, None
 
 
 def get_absolute_date(relative_date_string, publication_date=None):
@@ -118,7 +224,7 @@ def get_absolute_date(relative_date_string, publication_date=None):
     -----------
     relative_date_string        the relative date in an article (e.g. 'Last week'): String
     publication_date            the publication_date of the article: datetime
-    
+
     Returns:
     --------
     One of: 
@@ -134,39 +240,40 @@ def get_absolute_date(relative_date_string, publication_date=None):
         parsed_absolute_date = parsed_result[0][0]
 
         # Assumption: input date string is in the past
-        # If parsed date is in the future (relative to publication_date), 
+        # If parsed date is in the future (relative to publication_date),
         #   we roll it back to the past
-        
+
         if publication_date and parsed_absolute_date > publication_date:
             # parsedatetime returns a date in the future
             # likely because year isn't specified or date_string is relative
-            
+
             # Check a specific date is included
-            # TODO: Smarter way or regex to check if relative_date_string 
+            # TODO: Smarter way or regex to check if relative_date_string
             #       contains a month name?
-            months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 
+            months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun',
                       'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
-            contains_month = reduce( 
-                    lambda result, month: result or relative_date_string.lower().find(month) != -1, 
-                    months, False)
-            
+            contains_month = reduce(
+                lambda result, month: result or relative_date_string.lower().find(month) != -1,
+                months, False)
+
             if contains_month:
-                # TODO: Is it enough to just check for month names to determine if a 
+                # TODO: Is it enough to just check for month names to determine if a
                 #       date_string specifies a particular date?
 
                 # If date is specified explicity, and year is not
                 # roll back 1 year
-                return datetime(parsed_absolute_date.year-1, 
-                        parsed_absolute_date.month, parsed_absolute_date.day)
+                return datetime(parsed_absolute_date.year - 1,
+                                parsed_absolute_date.month, parsed_absolute_date.day)
             else:
                 # Use the relative datetime delta and roll back
                 delta = parsed_absolute_date - publication_date
-                num_weeks = int(delta.days/7)
-                and_num_days_after = 7 if delta.days%7 == 0 else delta.days%7
+                num_weeks = int(delta.days / 7)
+                and_num_days_after = 7 if delta.days % 7 == 0 else delta.days % 7
                 return publication_date - timedelta(weeks=num_weeks) - \
-                        timedelta(7-and_num_days_after)
+                    timedelta(7 - and_num_days_after)
         else:
-            # Return if date is in the past already or no publication_date is provided
+            # Return if date is in the past already or no publication_date is
+            # provided
             return parsed_absolute_date
     else:
         # Parse unsucessful
@@ -191,6 +298,8 @@ class Interpreter():
             " ".join(person_reporting_units))]
         self.structure_unit_lemmas = [t.lemma_ for t in self.nlp(
             " ".join(structure_reporting_units))]
+        self.household_lemmas = [t.lemma_ for t in self.nlp(
+            " ".join(["families", "households"]))]
         self.reporting_term_lemmas = self.person_term_lemmas + self.structure_term_lemmas
         self.reporting_unit_lemmas = self.person_unit_lemmas + self.structure_unit_lemmas
         self.relevant_article_lemmas = relevant_article_lemmas
@@ -272,29 +381,28 @@ class Interpreter():
         else:
             return Category.OTHER
 
-    def lsi_transform(self, text):
-
-
-
-    def city_subdivision_country(self, place_name):
+    def city_subdivision_country(self, place_name, hints=[]):
         '''Return dict with city (if applicable), subdivision (if applicable),
         and the ISO-3166 alpha_3 country code for a given place name.
         Return None if the country cannot be identified.
         '''
         place_name = common_names(place_name)
-        country_code_from_name = match_country_name(place_name)
-        if country_code_from_name:
-            return {'city': None, 'subdivision': None, 'country': country_code_from_name}
+        country_code, country_name = match_country_name(place_name)
+        if country_code:
+            return {'city': None, 'subdivision': None, 'country_code': country_code, 'country_name': country_name}
+
         # Try getting the country code using a subdivision name
-        country_from_subdivision = subdivision_country_code(place_name)
-        if country_from_subdivision:
-            return {'city': None, 'subdivision': place_name, 'country': country_from_subdivision}
+        country_code, country_name = subdivision_country_code(place_name)
+        if country_code:
+            return {'city': None, 'subdivision': place_name, 'country_code': country_code, 'country_name': country_name}
+
         # Try getting the country code using a city name
         country_code = self.cities_to_countries.get(
             strip_accents(place_name), None)
         if country_code:
+            country = pycountry.countries.get(alpha_2=country_code)
             return {'city': place_name, 'subdivision': None,
-                    'country': pycountry.countries.get(alpha_2=country_code).alpha_3}
+                    'country_code': country.alpha_3, 'country_name': country.name}
         return None
 
     def extract_countries(self, article):
@@ -303,20 +411,42 @@ class Interpreter():
         mentioned countries
         '''
         doc = self.nlp(u"{}".format(article))
-        possible_entities = set()
+        possible_entities = OrderedDict()
         for ent in doc.ents:
-            if ent.label_ in ('GPE', 'LOC'):
-                possible_entities.add(strip_words(ent.text))
-        possible_entities = set(possible_entities)
+            if ent.label_ in ('GPE', 'LOC', 'FAC', 'PERSON', 'NORP'):
+                ent_name = strip_words(ent.text)
+                if ent_name in possible_entities.keys():
+                    possible_entities[ent_name] += 1
+                else:
+                    possible_entities[ent_name] = 1
 
-        countries = set()
+        possible_entities = [k for k in possible_entities.keys()]
+        hints = possible_entities.copy()
+
+        countries = []
+        order_ind = 1
         if len(possible_entities) > 0:
             for c in possible_entities:
-                code = self.country_code(c)
-                if code:
-                    countries.add(code)
+                loc_info = {}
+                country_info = self.city_subdivision_country(c)
+                if country_info:
+                    loc_info['location_text'] = c
+                    loc_info['country_code'] = country_info['country_code']
+                    loc_info['order'] = order_ind
+                    countries.append(loc_info)
+                    order_ind += 1
 
-        return list(countries)
+                else:
+                    c_info = get_coordinates_mapzen(c, use_layers=False, hints=hints)
+                    country_code = c_info['country_code']
+                    if country_code != '':
+                        loc_info['location_text'] = c
+                        loc_info['country_code'] = country_code
+                        loc_info['order'] = order_ind
+                        countries.append(loc_info)
+                        order_ind += 1
+
+        return countries
 
     def test_token_equality(self, token_a, token_b):
         if token_a.i == token_b.i:
@@ -515,7 +645,8 @@ class Interpreter():
         # 2. Check date is not too far in the past vs. publication date:
         if publication_date and (publication_date - possible_date).days > 366:
             return False
-        # Otherwise return True; function can be expanded to consider other cases
+        # Otherwise return True; function can be expanded to consider other
+        # cases
         return True
 
     def basic_number(self, token):
@@ -561,11 +692,11 @@ class Interpreter():
         elif verb.lemma_ in self.person_term_lemmas:
             return self.person_unit_lemmas, Fact(verb, verb, verb.lemma_, "term")
 
-        elif verb.lemma_ == 'leave':
+        elif verb.lemma_ in ('leave', 'render', 'become'):
             children = verb.children
             obj_predicate = None
             for child in children:
-                if child.dep_ in ('oprd', 'dobj'):
+                if child.dep_ in ('oprd', 'dobj', 'acomp'):
                     obj_predicate = child
             if obj_predicate:
                 if obj_predicate.lemma_ in self.structure_term_lemmas:
@@ -652,7 +783,6 @@ class Interpreter():
         # Get simple or standard subjects and objects
         verb_objects = self.simple_subjects_and_objects(verb)
         # Special Cases
-
         # see if unit directly precedes verb
         if verb.i > 0:
             preceding = story[verb.i - 1]
@@ -676,6 +806,12 @@ class Interpreter():
                 ancestors = verb.ancestors
                 for anc in ancestors:
                     verb_objects.extend(self.simple_subjects_and_objects(anc))
+
+        #
+        if verb.dep_ in ("xcomp", "acomp", "ccomp"):
+            ancestors = verb.ancestors
+            for anc in ancestors:
+                verb_objects.extend(self.simple_subjects_and_objects(anc))
 
         # Look for 'pobj' in sentence
         if verb.dep_ == 'ROOT':
@@ -751,19 +887,22 @@ class Interpreter():
                 # Or if it is of the construction 'leave ____', then ____ is
                 # the following word
                 next_word = self.next_word(story, o)
-                if next_word and (next_word.i == verb.token.i or next_word.text == verb.lemma_.split(" ")[-1]):
-                    if search_type == self.structure_term_lemmas:
-                        unit = 'house'
-                    else:
-                        unit = 'person'
-                    quantity = Fact(o, o, o.lemma_, 'quantity')
-                    report = ExtractedReport([p.text for p in possible_locations], verb.lemma_,
-                                             unit, quantity, story.text)
-                    report.tag_spans = self.set_report_span(
-                        [verb, quantity, possible_locations])
-                    # report.display()
-                    reports.append(report)
-                    break
+                if next_word:
+                    if (next_word.i == verb.token.i or next_word.text == verb.lemma_.split(" ")[-1]
+                            or (next_word.dep_ == 'auxpass' and self.next_word(story, next_word).i == verb.token.i)
+                            or o.idx < verb.end_idx):
+                        if search_type == self.structure_term_lemmas:
+                            unit = 'Households'
+                        else:
+                            unit = 'People'
+                        quantity = Fact(o, o, o.lemma_, 'quantity')
+                        report = ExtractedReport([p.text for p in possible_locations], self.convert_term(verb),
+                                                 unit, quantity, story.text)
+                        report.tag_spans = self.set_report_span(
+                            [verb, quantity, possible_locations])
+                        # report.display()
+                        reports.append(report)
+                        break
             elif o.lemma_ in search_type:
                 reporting_unit = o
                 noun_conj = self.test_noun_conj(sentence, o)
@@ -775,11 +914,10 @@ class Interpreter():
                 else:
                     # Try and get a number - begin search from noun.
                     quantity = self.get_quantity(sentence, o)
-
                 reporting_unit = Fact(
                     reporting_unit, reporting_unit, reporting_unit.lemma_, "unit")
-                report = ExtractedReport([p.text for p in possible_locations], verb.lemma_,
-                                         reporting_unit.lemma_, quantity, story.text)
+                report = ExtractedReport([p.text for p in possible_locations], self.convert_term(verb),
+                                         self.convert_unit(reporting_unit), quantity, story.text)
                 report.tag_spans = self.set_report_span(
                     [verb, quantity, reporting_unit, possible_locations])
                 reports.append(report)
@@ -793,7 +931,16 @@ class Interpreter():
         text = re.sub(r'(IMPACT)([a-zA-Z0-9])', r'\1. \2', text)
         text = re.sub(r'(RESPONSE)([a-zA-Z0-9])', r'\1. \2', text)
         text = re.sub(r'([a-zA-Z])(\d)', r'\1. \2', text)
-        return text
+        text = re.sub(r'(\d)\s(\d)', r'\1\2', text)
+        text = text.replace('\r', ' ')
+        text = text.replace('  ', ' ')
+        text = text.replace('\n', ' ')
+        text = text.replace("peole", "people")
+        output = ''
+        for char in text:
+            if char in string.printable:
+                output += char
+        return output
 
     def extract_all_dates(self, story, publication_date=None):
         date_times = []
@@ -805,6 +952,40 @@ class Interpreter():
             if abs_date and self.date_likelihood(abs_date, publication_date):
                 date_times.append(abs_date)
         return date_times
+
+    def convert_unit(self, reporting_unit):
+        if reporting_unit.lemma_ in self.structure_unit_lemmas:
+            return "Households"
+        elif reporting_unit.lemma_ in self.household_lemmas:
+            return "Households"
+        else:
+            return "People"
+
+    def convert_term(self, reporting_term):
+        reporting_term = reporting_term.text.split(" ")
+        reporting_term = [self.nlp(t)[0].lemma_ for t in reporting_term]
+        if "displace" in reporting_term:
+            return "Displaced"
+        elif "evacuate" in reporting_term:
+            return "Evacuated"
+        elif "flee" in reporting_term:
+            return "Forced to Flee"
+        elif "homeless" in reporting_term:
+            return "Homeless"
+        elif "camp" in reporting_term:
+            return "In Relief Camp"
+        elif len(set(reporting_term) & set(["shelter", "accommodate"])) > 0:
+            return "Sheltered"
+        elif "relocate" in reporting_term:
+            return "Relocated"
+        elif "destroy" in reporting_term:
+            return "Destroyed Housing"
+        elif "damage" in reporting_term:
+            return "Partially Destroyed Housing"
+        elif "uninhabitable" in reporting_term:
+            return "Uninhabitable Housing"
+        else:
+            return "Displaced"
 
     def process_article_new(self, story):
         """

@@ -1,4 +1,7 @@
 import React, { Component, PropTypes } from 'react';
+import {createStore} from 'redux';
+import {Provider, connect} from 'react-redux';
+
 import Header from '../common/Header';
 const propTypes = {
   children: PropTypes.element.isRequired,
@@ -7,8 +10,7 @@ const propTypes = {
 export default class App extends React.Component {
   render() {
     return (
-      <div className="container-fluid text-center">
-        <Header />
+      <div className="container-fluid container-no-padding text-center">
         {this.props.children}
       </div>
     )

@@ -1,5 +1,5 @@
 import csv
-from internal_displacement.interpreter import Interpreter
+from internal_displacement.interpreter import Interpreter, get_coordinates_mapzen
 from internal_displacement.model.model import Status, Session, Category, Article, Content, Country, CountryTerm, \
     Location, Report, ReportDateSpan, ArticleCategory, Base
 import concurrent
@@ -9,6 +9,8 @@ import pandas as pd
 import numpy as np
 import json
 from datetime import datetime
+import requests
+from itertools import *
 
 
 """
@@ -165,6 +167,7 @@ class Pipeline(object):
             return "Processed: Not in English"
         # Try and extract reports
         self.fetch_reports(article)
+        self.update_locations(article)
         # Set the relevance status
         status = len(article.reports) > 0
         article.relevance = status
@@ -281,14 +284,37 @@ class Pipeline(object):
             loc_dict = self.interpreter.city_subdivision_country(location)
             if loc_dict:
                 country = self.session.query(Country).filter_by(
-                    code=loc_dict['country']).one_or_none()
+                    code=loc_dict['country_code']).one_or_none()
                 location = Location(description=location,
                                     city=loc_dict['city'],
                                     subdivision=loc_dict['subdivision'],
                                     country=country)
-                self.session.add(location)
-                self.session.commit()
-                report.locations.append(location)
+            else:
+                location = Location(description=location)
+
+            self.session.add(location)
+            self.session.commit()
+            report.locations.append(location)
+
+    def update_locations(self, article):
+        # Get unique list of all locations mentioned in reports in article
+        locs = list(set([loc for report in article.reports for loc in report.locations]))
+        # Get names of all mentioned locations to use as hints
+        location_names = [l.description for l in locs]
+        for l in locs:
+            # If no lat-long, try and update
+            if not l.latlong or l.latlong == '':
+                # If country has already been identified, use existing information
+                if l.country:
+                    country_name = l.country.terms[0].term
+                    coords = get_coordinates_mapzen(city=l.city, subdivision=l.subdivision, country=country_name, use_layers=True, hints=location_names)
+                else:
+                    coords = get_coordinates_mapzen(l.description, use_layers=False, hints=location_names)
+                    country = self.session.query(Country).filter_by(code=coords['country_code']).one_or_none()
+                    l.country=country
+                l.latlong=coords["coordinates"]
+        self.session.commit()
+
 
     def categorize(self, article):
         '''Categorize the report
