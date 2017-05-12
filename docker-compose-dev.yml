@@ -20,12 +20,23 @@ services:
     build: internal-displacement-web
     image: internal-displacement-web
     volumes:
+      # client
       - ./internal-displacement-web/client/public:/internal-displacement-web/client/public
       - ./internal-displacement-web/client/src:/internal-displacement-web/client/src
       - ./internal-displacement-web/client/package.json:/internal-displacement-web/client/package.json
-      - ./internal-displacement-web/server/:/internal-displacement-web/server
+      - ./internal-displacement-web/client/yarn.lock:/internal-displacement-web/client/yarn.lock
+      # server
+      - ./internal-displacement-web/server/api:/internal-displacement-web/server/api
+      - ./internal-displacement-web/server/pgDB:/internal-displacement-web/server/pgDB
+      - ./internal-displacement-web/server/public:/internal-displacement-web/server/public
+      - ./internal-displacement-web/server/src:/internal-displacement-web/server/src
+      - ./internal-displacement-web/server/index.js:/internal-displacement-web/server/index.js
       - ./internal-displacement-web/server/package.json:/internal-displacement-web/server/package.json
+      - ./internal-displacement-web/server/routes.js:/internal-displacement-web/server/routes.js
+      - ./internal-displacement-web/server/yarn.lock:/internal-displacement-web/server/yarn.lock
+      # start
       - ./internal-displacement-web/package.json:/internal-displacement-web/package.json
+      - ./internal-displacement-web/yarn.lock:/internal-displacement-web/yarn.lock
     ports:
       - "3000:3000"
       - "3322:3322"
