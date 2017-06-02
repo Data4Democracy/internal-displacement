@@ -194,14 +194,14 @@ class Pipeline(object):
         '''Attempt to download and parse article.
         Update status and add content to database (if successful).
         '''
-        content, publish_date, title, content_type, authors, domain = self.scraper.scrape(
+        content, publish_date, title, content_type, authors, domain, status_code = self.scraper.scrape(
             article.url)
         if content == 'retrieval_failed':
             article.update_status(Status.FETCHING_FAILED)
         else:
             self.session.query(Article).filter(Article.id == article.id).\
                 update({"domain": domain, "status": Status.FETCHED, "title": title, "publication_date": publish_date,
-                        "authors": ", ".join(authors)})
+                        "authors": ", ".join(authors), "status_code": status_code})
             # Add the article content
             content = Content(article_id=article.id, retrieval_date=datetime.now(),
                               content=content, content_type=content_type)

@@ -1,6 +1,7 @@
 import newspaper
 import csv
 import urllib
+import requests
 from urllib import request
 from urllib.parse import urlparse
 import textract
@@ -119,9 +120,11 @@ class Scraper(object):
             # currently default to text but should be able to determine img/video
             # etc
             article_content_type = 'text'
-            return article_text, article_pub_date, article_title, article_content_type, article_authors, article_domain
+            return article_text, article_pub_date, article_title, article_content_type, article_authors, article_domain, 200
         else:  # Temporary fix to deal with https://github.com/codelucas/newspaper/issues/280
-            return "retrieval_failed", None, "", datetime.datetime.now(), "", ""
+            response = requests.get(url)
+            status_code = response.status_code
+            return "retrieval_failed", None, "", datetime.datetime.now(), "", "", status_code
 
     def get_pdf(self, url):
         ''' Takes a pdf url, downloads it and saves it locally.'''

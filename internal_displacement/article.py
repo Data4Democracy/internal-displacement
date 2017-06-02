@@ -33,7 +33,7 @@ class Article(object):
 
     """
 
-    def __init__(self, content, pub_date, title, content_type, authors, domain, url, language="EN", country_codes=[], reports=[], relevance=False):
+    def __init__(self, content, pub_date, title, content_type, authors, domain, url, status_code=200, language="EN", country_codes=[], reports=[], relevance=False):
         self.content = content
         self.publication_date = pub_date
         self.title = title
@@ -41,6 +41,7 @@ class Article(object):
         self.domain = domain
         self.content_type = content_type
         self.url = url
+        self.status_code = status_code
         self.language = language
         self.relevance = relevance
         

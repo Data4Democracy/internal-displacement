@@ -16,15 +16,11 @@ from internal_displacement.extracted_report import Fact
 from sklearn.externals import joblib
 from internal_displacement.article import Article
 from internal_displacement.model.model import Category
-<<<<<<< HEAD
 from gensim.corpora import Dictionary
 from gensim.models import TfidfModel, LsiModel
-||||||| merged common ancestors
-=======
 from itertools import *
 from collections import Counter, OrderedDict
 import string
->>>>>>> upstream/master
 
 module_path = os.path.abspath(os.path.join('..'))
 if module_path not in sys.path:
