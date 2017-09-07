@@ -1,5 +1,8 @@
 # Internal Displacement
 
+**This repository is now archived. The project is being continued but is currently closed to new members.**
+Data for Democracy is a community driven organization. If you want to start a new project in a similar area, you are welcome to do so! Check out the [#refugees](https://datafordemocracy.slack.com/messages/refugees/) channel and rally your fellow data nerds!
+
 **Slack Channel:** [#internal-displacement](https://datafordemocracy.slack.com/messages/internal-displacement/)
 
 **Project Description:**  Classifying, tagging, analyzing and visualizing news articles about [internal displacement](https://en.wikipedia.org/wiki/Internally_displaced_person). Based on a [challenge from the IDMC](https://unite.un.org/ideas/content/idetect).
