@@ -5,7 +5,7 @@ Data for Democracy is a community driven organization. If you want to start a ne
 
 **Slack Channel:** [#internal-displacement](https://datafordemocracy.slack.com/messages/internal-displacement/)
 
-**Project Description:**  Classifying, tagging, analyzing and visualizing news articles about [internal displacement](https://en.wikipedia.org/wiki/Internally_displaced_person). Based on a [challenge from the IDMC](https://unite.un.org/ideas/content/idetect).
+**Project Description:**  Classifying, tagging, analyzing and visualizing news articles about [internal displacement](https://en.wikipedia.org/wiki/Internally_displaced_person). Based on a [challenge from the IDMC](https://web.archive.org/web/20170316043624/https://unite.un.org/ideas/content/idetect).
 
 The tool we are building carries out a number of functions:
 
@@ -38,7 +38,7 @@ Front end and infrastructure
 ## Getting started:
 
 1. Join the [Slack channel]((https://datafordemocracy.slack.com/messages/internal-displacement/)).
-2. Read the rest of this page and the [IDETECT challenge page](https://unite.un.org/ideas/content/idetect) to understand the project.
+2. Read the rest of this page and the [IDETECT challenge page](https://web.archive.org/web/20170316043624/https://unite.un.org/ideas/content/idetect) to understand the project.
 3. Check out our [issues](https://github.com/Data4Democracy/internal-displacement/issues) (small tasks) and [milestones](https://github.com/Data4Democracy/internal-displacement/milestones). Keep an eye out for `help-wanted`, `beginner-friendly`, and `discussion` tags. 
 4. See something you want to work on? Make a comment on the issue or ping us on Slack to let us know.
 5. Beginner with GitHub? Make sure you've read the [steps for contributing to a D4D project on GitHub](https://github.com/Data4Democracy/github-playground).
@@ -99,7 +99,7 @@ You can run everything as you're accustomed to by installing dependencies locall
 another option is to run in a Docker container. That way, all of the dependencies will
 be installed in a controlled, reproducible way.
 
-1. Install Docker: https://www.docker.com/products/overview
+1. Install [Docker](https://www.docker.com/products/overview)
 
 2. Run this command:
 
@@ -149,7 +149,7 @@ docker-compose -f docker-compose-dev.yml up --build
 ```
 
 You'll need to use the jupyter-dev version until your dependencies are merged to master and a new version is
-built. Talk to @aneel on Slack if you need to do this.
+built. Talk to [@aneel](https://datafordemocracy.slack.com/messages/@aneel/) on Slack if you need to do this.
 
 Note: if you want to run SQL commands againt the database directly, you can do
 that by starting a Terminal within Jupyter and running the PostgreSQL shell:
